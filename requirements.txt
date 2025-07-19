@@ -1,0 +1,21 @@
+### File: requirements.txt
+fastapi
+uvicorn
+pydantic
+python-multipart
+pillow
+geopy
+requests
+scikit-learn
+joblib
+pickle
+numpy
+requests
+torch
+pillow
+numpy
+python-multipart
+httpx
+geopy
+python-dotenv
+gdown

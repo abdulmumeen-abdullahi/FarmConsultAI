@@ -1,0 +1,14 @@
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore virtual environment
+venv/
+env/
+
+# Ignore environment variables
+.env
+
+# Ignore models
+*.pkl
+*.pt
