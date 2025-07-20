@@ -88,4 +88,4 @@ if st.button("Predict Yield"):
 
 # --- Footer ---
 st.markdown("---")
-st.caption("Powered by Scikit-Learn + GPT-3.5 | Built with ❤️ for Nigerian farmers)
+st.caption("Powered by Scikit-Learn + GPT-3.5 | Built with ❤️ for Nigerian farmers")
