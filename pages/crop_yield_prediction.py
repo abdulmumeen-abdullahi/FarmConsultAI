@@ -107,21 +107,27 @@ Use local, simple and clear terms.
         st.error(f"❌ Prediction failed: {e}")
 
 # ----------------- DISPLAY CHAT HISTORY -----------------
-if st.session_state.chat_history:
-    st.markdown("### FarmConsultAI Conversation History")
-    for role, message in st.session_state.chat_history:
-        st.chat_message(role).markdown(message)
-
-# ----------------- FOLLOW-UP QUESTION -----------------
 if st.session_state.last_advice:
-    st.markdown("### 💬 Ask Follow-up Question")
-    follow_up = st.text_input("Have any more questions about your farm?", key="followup_input")
+    # Show the previous full chat (including farmer input + advice)
+    st.subheader("💬 FarmConsultAI Conversation")
+    for role, message in st.session_state.chat_history:
+        with st.chat_message("user" if role == "Farmer" else "assistant"):
+            st.markdown(message)
+
+    # Follow-up input (using chat_input)
+    follow_up = st.chat_input("Got another question about your farm?")
 
     if follow_up:
+        with st.chat_message("user"):
+            st.markdown(follow_up)
+
         with st.spinner("FarmConsultAI is thinking..."):
             st.session_state.chat_history.append(("Farmer", follow_up))
             followup_reply = chat.send_message(follow_up)
             st.session_state.chat_history.append(("FarmConsultAI", followup_reply.text))
+
+        with st.chat_message("assistant"):
+            st.markdown(followup_reply.text)
 
 # ----------------- FOOTER -----------------
 st.markdown("---")
