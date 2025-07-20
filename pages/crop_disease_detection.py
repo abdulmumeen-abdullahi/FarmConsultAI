@@ -13,20 +13,29 @@ import os
 import gdown
 from PIL import Image
 import torchvision.transforms as transforms
+from openai import OpenAI
 import openai
 
 # ----------------- CONFIG -----------------
-st.set_page_config(page_title="Crop Disease Diagnosis", layout="centered")
+st.set_page_config(page_title="NaijaFarmConsultAI - Crop Disease", layout="centered")
 
+# Load OpenAI Key securely
+os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+
+# ----------------- MODEL PATHS -----------------
 DISEASE_MODEL_ID = "1O-K4s3tv3WTSouhUksPDA5u6gNQ_d0j1"
 DISEASE_MODEL_PATH = "best_crop_disease_model.pt"
 
-DISEASE_CLASSES = ['Corn___Common_Rust', 'Corn___Gray_Leaf_Spot', 'Corn___Healthy', 'Corn___Northern_Leaf_Blight', 'Potato___Early_Blight',
-                   'Potato___Healthy', 'Potato___Late_Blight', 'Rice___Brown_Spot', 'Rice___Healthy', 'Rice___Leaf_Blast',
-                   'Rice___Neck_Blast', 'Sugarcane__Bacterial_Blight', 'Sugarcane__Healthy', 'Sugarcane__Red_Rot', 'Wheat___Brown_Rust',
-                   'Wheat___Healthy', 'Wheat___Yellow_Rust']
+DISEASE_CLASSES = [
+    'Corn___Common_Rust', 'Corn___Gray_Leaf_Spot', 'Corn___Healthy', 'Corn___Northern_Leaf_Blight',
+    'Potato___Early_Blight', 'Potato___Healthy', 'Potato___Late_Blight',
+    'Rice___Brown_Spot', 'Rice___Healthy', 'Rice___Leaf_Blast', 'Rice___Neck_Blast',
+    'Sugarcane__Bacterial_Blight', 'Sugarcane__Healthy', 'Sugarcane__Red_Rot',
+    'Wheat___Brown_Rust', 'Wheat___Healthy', 'Wheat___Yellow_Rust'
+]
 
-# ----------------- MODEL -----------------
+# ----------------- MODEL LOADER -----------------
 def download_model():
     if not os.path.exists(DISEASE_MODEL_PATH):
         url = f"https://drive.google.com/uc?id={DISEASE_MODEL_ID}"
@@ -54,51 +63,98 @@ def predict_disease(image_file):
     _, predicted = torch.max(outputs, 1)
     return DISEASE_CLASSES[predicted.item()]
 
-# ----------------- GPT ADVICE -----------------
-def get_gpt_advice(disease_label):
-    prompt = (
-        f"A Nigerian farmer uploaded a crop image, and it was classified as '{disease_label}'. "
-        "Act like a Nigerian agricultural extension officer. Explain what this disease is, its effect on the crop, "
-        "and give actionable treatment or management tips for the farmer in Nigeria."
-    )
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are an agricultural assistant helping Nigerian farmers understand crop diseases."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.7,
-        max_tokens=500
-    )
-    return response.choices[0].message["content"]
+# ----------------- GPT CONTEXT -----------------
+system_prompt = [
+    {"role": "system", "content": """
+        You are NaijaFarmConsultAI, a friendly and knowledgeable agricultural extension officer in Nigeria. 
+        You assist farmers with advice about crop diseases, management practices, and prevention. 
+        Use simple, local, and clear terms when explaining plant diseases. Maintain a warm tone like a trusted advisor.
+        
+        RESPONSE FLOW:
+        1. Start with a friendly greeting and confirmation of the crop disease identified.
+        2. Explain what the disease is and its effect on the crop.
+        3. Recommend 2–3 actionable treatment or control steps.
+        4. Give a quick prevention tip for the future.
+        5. Encourage the farmer to ask for more help if needed.
+        """}
+]
 
-# ----------------- MAIN APP -----------------
+def get_completions_from_messages(messages, model="gpt-3.5-turbo", stream=True):
+    client = OpenAI()
+    chat_completion = client.chat.completions.create(
+        messages=messages,
+        model=model,
+        stream=stream
+    )
+    return chat_completion
+
+# ----------------- STREAMLIT APP -----------------
 def main():
-    st.title("Crop Disease Diagnosis")
-    st.write("Upload a crop image to detect diseases and get expert treatment advice.")
+    st.title("NaijaFarmConsultAI - Crop Disease")
+    st.write("Upload an image of your crop to detect disease and chat with NaijaFarmConsultAI for expert advice.")
 
-    uploaded_file = st.file_uploader("Upload Crop Image", type=["jpg", "jpeg", "png"])
+    if "openai_model" not in st.session_state:
+        st.session_state["openai_model"] = "gpt-3.5-turbo"
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = system_prompt.copy()
+
+    uploaded_file = st.file_uploader("Upload a crop image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
-        st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+        st.image(uploaded_file, caption="Your Uploaded Image", use_column_width=True)
 
         if st.button("Diagnose Disease"):
-            with st.spinner("Analyzing image..."):
-                prediction = predict_disease(uploaded_file)
-            st.success(f"Prediction: **{prediction}**")
+            with st.spinner("Running diagnosis..."):
+                disease_prediction = predict_disease(uploaded_file)
+            st.success(f"Predicted Disease: **{disease_prediction}**")
 
-            st.subheader("Expert Advice")
-            try:
-                openai.api_key = st.secrets["OPENAI_API_KEY"]
-                with st.spinner("Getting advice from GPT..."):
-                    advice = get_gpt_advice(prediction)
-                st.info(advice)
-            except Exception as e:
-                st.error("❌ Failed to get GPT advice.")
-                st.exception(e)
+            st.session_state.messages.append({"role": "user", "content": f"What should I do for: {disease_prediction}?"})
+
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                full_response = ""
+
+                for chunk in get_completions_from_messages(
+                    messages=st.session_state.messages,
+                    model=st.session_state["openai_model"],
+                    stream=True
+                ):
+                    if chunk.choices[0].delta.content:
+                        full_response += chunk.choices[0].delta.content
+                        message_placeholder.markdown(full_response + "▌")
+
+                message_placeholder.markdown(full_response)
+
+            # Save the assistant's full reply for context
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+
+    # --- Chat Input for Follow-ups ---
+    if user_prompt := st.chat_input("Ask NaijaFarmConsultAI anything about your crop health..."):
+        st.session_state.messages.append({"role": "user", "content": user_prompt})
+
+        with st.chat_message("user"):
+            st.markdown(user_prompt)
+
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            full_response = ""
+
+            for chunk in get_completions_from_messages(
+                messages=st.session_state.messages,
+                model=st.session_state["openai_model"],
+                stream=True
+            ):
+                if chunk.choices[0].delta.content:
+                    full_response += chunk.choices[0].delta.content
+                    message_placeholder.markdown(full_response + "▌")
+
+            message_placeholder.markdown(full_response)
+
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
 
     st.markdown("---")
-    st.caption("🚀 Powered by EfficientNet + PyTorch + GPT-3.5 | Built with ❤️ for Nigerian Farmers 🇳🇬")
+    st.caption("🚀 Powered by PyTorch + EfficientNet + OpenAI | Built with ❤️ for Nigerian Farmers 🇳🇬")
 
 if __name__ == "__main__":
     main()
