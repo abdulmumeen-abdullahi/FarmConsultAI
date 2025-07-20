@@ -3,15 +3,16 @@ import pickle
 import numpy as np
 import os
 import gdown
-from openai import OpenAI
+import google.generativeai as genai
 
 # ----------------- CONFIG -----------------
 st.set_page_config(page_title="FarmConsultAI - Crop Yield Prediction", layout="centered")
 st.title("FarmConsultAI - Crop Yield Prediction")
 st.write("Estimate your farm's crop yield using soil, weather, and nutrient data.")
 
-# ----------------- SET API KEY -----------------
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# ----------------- SET GEMINI API KEY -----------------
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+gemini_model = genai.GenerativeModel("gemini-pro")
 
 # ----------------- LOAD MODEL -----------------
 model_file_id = "1lDIpOAM4jLx7wbnBlB9360z98twaprvG"
@@ -50,22 +51,19 @@ soil_encoded = {"Clay": 0, "Loamy": 1, "Peaty": 2, "Saline": 3, "Sandy": 4}[soil
 input_data = np.array([[crop_encoded, soil_encoded, soil_ph, temperature, humidity,
                         wind_speed, n, p, k, soil_quality]])
 
-# ----------------- GPT SYSTEM PROMPT -----------------
-system_prompt = {
-    "role": "system", 
-    "content": """
-        You are FarmConsultAI, a friendly and knowledgeable agricultural consultant and extension officer in Nigeria.
-        You assist farmers with expert advice on crop yield, farm conditions, and yield improvement.
-        Use simple, local, and warm language, like a trusted rural consultant and extension officer.
+# ----------------- SYSTEM PROMPT CONTENT -----------------
+system_prompt = """
+You are FarmConsultAI, a friendly and knowledgeable agricultural consultant and extension officer in Nigeria.
+You assist farmers with expert advice on crop yield, farm conditions, and yield improvement.
+Use simple, local, and warm language, like a trusted rural consultant and extension officer.
 
-        RESPONSE FLOW:
-        1. Greet and confirm the predicted yield and crop.
-        2. Explain what the yield means.
-        3. Recommend 3 ways to improve the yield in this context.
-        4. Give one prevention or maintenance tip for sustained yield.
-        5. Do not ask questions or offer further assistance.
-    """
-}
+RESPONSE FLOW:
+1. Greet and confirm the predicted yield and crop.
+2. Explain what the yield means.
+3. Recommend 3 ways to improve the yield in this context.
+4. Give one prevention or maintenance tip for sustained yield.
+5. Do not ask questions or offer further assistance.
+"""
 
 # ----------------- PREDICTION -----------------
 if st.button("Predict Yield"):
@@ -90,22 +88,16 @@ if st.button("Predict Yield"):
         """
 
         with st.spinner("Generating advice from FarmConsultAI..."):
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    system_prompt,
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=500
-            )
-            advice = response.choices[0].message.content
-            st.markdown("###FarmConsultAI Advice")
-            st.info(advice)
+            gemini_response = gemini_model.generate_content([
+                {"role": "system", "parts": [system_prompt]},
+                {"role": "user", "parts": [prompt]}
+            ])
+            st.markdown("### FarmConsultAI Advice")
+            st.info(gemini_response.text)
 
     except Exception as e:
         st.error(f"❌ Prediction failed: {e}")
 
 # ----------------- FOOTER -----------------
 st.markdown("---")
-st.caption("Powered by Scikit-Learn + OpenAI | Built with ❤️ for Nigerian Farmers")
+st.caption("Powered by Scikit-Learn + Gemini | Built with ❤️ for Nigerian Farmers")
