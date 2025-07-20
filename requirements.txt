@@ -9,3 +9,4 @@ numpy>=1.24.0
 gdown
 scikit-learn>=1.2.0
 google-generativeai
+timm
