@@ -12,7 +12,14 @@ st.write("Estimate your farm's crop yield using soil, weather, and nutrient data
 
 # ----------------- SET GEMINI API KEY -----------------
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-chat = genai.GenerativeModel("gemini-1.5-flash").start_chat(history=[])
+
+# Initialize chat session if not in state
+if "chat" not in st.session_state:
+    st.session_state.chat = genai.GenerativeModel("gemini-1.5-flash").start_chat(history=[])
+    st.session_state.last_advice = None
+    st.session_state.prediction_context = ""
+
+chat = st.session_state.chat
 
 # ----------------- LOAD MODEL -----------------
 model_file_id = "1lDIpOAM4jLx7wbnBlB9360z98twaprvG"
@@ -51,6 +58,13 @@ soil_encoded = {"Clay": 0, "Loamy": 1, "Peaty": 2, "Saline": 3, "Sandy": 4}[soil
 input_data = np.array([[crop_encoded, soil_encoded, soil_ph, temperature, humidity,
                         wind_speed, n, p, k, soil_quality]])
 
+
+# Session state to persist chat
+if "chat" not in st.session_state:
+    st.session_state.chat = genai.GenerativeModel("gemini-1.5-flash").start_chat(history=[])
+
+chat = st.session_state.chat
+
 # ----------------- SYSTEM PROMPT -----------------
 system_prompt = """
 You are FarmConsultAI, a friendly and knowledgeable agricultural consultant, advisor and extension officer in Nigeria.
@@ -88,14 +102,28 @@ As FarmConsultAI, provide:
 Use local, simple and clear terms.
 """
 
-        with st.spinner("Getting advice from FarmConsultAI..."):
-            chat.send_message(system_prompt)  # inject system role content
+        with st.spinner("Getting expert advice from FarmConsultAI..."):
+            chat.send_message(system_prompt)
             gemini_reply = chat.send_message(user_prompt)
-            st.markdown("### FarmConsultAI Advice")
-            st.info(gemini_reply.text)
+            st.session_state.last_advice = gemini_reply.text
+            st.session_state.prediction_context = user_prompt
+
+        st.markdown("###FarmConsultAI Advice")
+        st.info(st.session_state.last_advice)
 
     except Exception as e:
         st.error(f"❌ Prediction failed: {e}")
+
+# ----------------- FOLLOW-UP QUESTION -----------------
+if st.session_state.last_advice:
+    st.markdown("### 💬 Ask Follow-up Question")
+    follow_up = st.text_input("Have any more questions about your farm?", key="followup_input")
+
+    if follow_up:
+        with st.spinner("FarmConsultAI is thinking..."):
+            followup_reply = chat.send_message(follow_up)
+            st.markdown("**FarmConsultAI says:**")
+            st.success(followup_reply.text)
 
 # ----------------- FOOTER -----------------
 st.markdown("---")
