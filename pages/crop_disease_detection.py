@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Crop_Disease_Detection with Gemini"""
+"""Crop_Disease_Detection"""
 
 import streamlit as st
 import torch
 import os
 import gdown
+import timm
+import torch.nn as nn
 from PIL import Image
 import torchvision.transforms as transforms
 import google.generativeai as genai
@@ -37,14 +39,25 @@ def download_model():
 @st.cache_resource
 def load_model():
     download_model()
-    model = torch.load(DISEASE_MODEL_PATH, map_location=torch.device("cpu"))
+
+    # Rebuild the same EfficientNet-B3 architecture
+    model = timm.create_model('efficientnet_b3', pretrained=False)  # No need to load pretrained again
+    model.classifier = nn.Sequential(
+        nn.Linear(in_features=1536, out_features=17)  # Must match training setup
+    )
+
+    # Load saved weights
+    state_dict = torch.load(DISEASE_MODEL_PATH, map_location=torch.device("cpu"))
+    model.load_state_dict(state_dict)
+
+    # Put model in evaluation mode
     model.eval()
     return model
 
 def preprocess_image(image_file):
     image = Image.open(image_file).convert("RGB")
     transform = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((300, 300)),
         transforms.ToTensor()
     ])
     return transform(image).unsqueeze(0)
@@ -52,8 +65,15 @@ def preprocess_image(image_file):
 def predict_disease(image_file):
     model = load_model()
     input_tensor = preprocess_image(image_file)
-    outputs = model(input_tensor)
-    _, predicted = torch.max(outputs, 1)
+
+    # If you want to support GPU
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    input_tensor = input_tensor.to(device)
+
+    with torch.no_grad():
+        outputs = model(input_tensor)
+        _, predicted = torch.max(outputs, 1)
     return DISEASE_CLASSES[predicted.item()]
 
 # ----------------- GEMINI AI RESPONSE -----------------
@@ -63,14 +83,14 @@ def get_gemini_advice(disease_name):
 
     As FarmConsultAI, explain:
     - What this disease is and how it affects the crop.
-    - 2 or 3 simple treatments or control strategies.
+    - 3 simple treatments or control strategies.
     - One practical prevention tip.
 
     Use simple, clear, local Nigerian farmer language and sound like a friendly extension officer.
     """
 
     try:
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
@@ -85,7 +105,7 @@ def main():
     uploaded_file = st.file_uploader("Upload a crop image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
-        st.image(uploaded_file, caption="Your Uploaded Image", use_column_width=True)
+        st.image(uploaded_file, caption="Your Uploaded Image", use_container_width=True)
 
         if st.button("Diagnose Disease"):
             with st.spinner("Running diagnosis..."):
