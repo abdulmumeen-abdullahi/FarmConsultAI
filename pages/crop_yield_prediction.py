@@ -4,37 +4,54 @@ import numpy as np
 import os
 import gdown
 import openai
-from openai import OpenAI, RateLimitError
 
 # ----------------- CONFIG -----------------
 st.set_page_config(page_title="FarmConsultAI - Crop Yield Prediction", layout="centered")
+st.title("FarmConsultAI - Crop Yield Prediction")
+st.write("Estimate your farm's crop yield using soil, weather, and nutrient data.")
 
-# Load OpenAI Key securely
+# ----------------- SET API KEY -----------------
 os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-# ----------------- MODEL FILE IDs -----------------
+# ----------------- LOAD MODEL -----------------
 model_file_id = "1lDIpOAM4jLx7wbnBlB9360z98twaprvG"
 model_url = f"https://drive.google.com/uc?id={model_file_id}"
 model_path = "yield_best_random_model.pkl"
 
-# ----------------- LOADERS -----------------
 @st.cache_resource
-def load_pickle_file(url, path, desc):
-    if not os.path.exists(path):
-        with st.spinner(f"Downloading {desc}..."):
-            gdown.download(url, path, quiet=False)
-    with open(path, "rb") as f:
-        return pickle.load(f)
+def load_model():
+    if not os.path.exists(model_path):
+        with st.spinner("Downloading model..."):
+            gdown.download(model_url, model_path, quiet=False)
+    with open(model_path, "rb") as model_file:
+        return pickle.load(model_file)
 
 try:
-    model = load_pickle_file(model_url, model_path, "Crop Yield Model")
+    model = load_model()
 except Exception as e:
-    st.error(f"Error loading model components. Details: {e}")
+    st.error(f"Failed to load model: {e}")
     st.stop()
 
+# ----------------- USER INPUTS -----------------
+crop_type = st.selectbox("Crop Type", ["Corn", "Potato", "Rice", "Sugarcane", "Wheat"])
+soil_type = st.selectbox("Soil Type", ["Clay", "Loamy", "Peaty", "Saline", "Sandy"])
+soil_ph = st.number_input("Soil pH", min_value=0.0, max_value=14.0, value=6.5)
+temperature = st.slider("Temperature (°C)", 10, 40, 25)
+humidity = st.slider("Humidity (%)", 0, 100, 50)
+wind_speed = st.slider("Wind Speed (km/h)", 0, 100, 15)
+n = st.number_input("Nitrogen (N)", min_value=0, value=60)
+p = st.number_input("Phosphorus (P)", min_value=0, value=45)
+k = st.number_input("Potassium (K)", min_value=0, value=31)
+soil_quality = st.number_input("Soil Quality", min_value=0, max_value=100, value=50)
 
-# ----------------- GPT CONTEXT -----------------
+# ----------------- ENCODE INPUT -----------------
+crop_encoded = {"Corn": 0, "Potato": 1, "Rice": 2, "Sugarcane": 3, "Wheat": 4}[crop_type]
+soil_encoded = {"Clay": 0, "Loamy": 1, "Peaty": 2, "Saline": 3, "Sandy": 4}[soil_type]
+input_data = np.array([[crop_encoded, soil_encoded, soil_ph, temperature, humidity,
+                        wind_speed, n, p, k, soil_quality]])
+
+# ----------------- GPT SYSTEM PROMPT -----------------
 system_prompt = [
     {"role": "system", "content": """
         You are FarmConsultAI, a friendly and knowledgeable agricultural consultant and extension officer in Nigeria.
@@ -50,56 +67,20 @@ system_prompt = [
     """}
 ]
 
-def get_completions_from_messages(messages, model="gpt-3.5-turbo", stream=True):
-    client = OpenAI()
-    try:
-        return client.chat.completions.create(
-            messages=messages,
-            model=model,
-            stream=stream
-        )
-    except RateLimitError:
-        st.error("Rate limit reached. Please wait a few seconds and try again.")
-        return None
-    except Exception as e:
-        st.error(f"Unexpected error: {e}")
-        return None
-
-# ----------------- STREAMLIT APP -----------------
-st.title("FarmConsultAI - Crop Yield Prediction")
-st.write("Estimate your farm's crop yield using soil, weather, and nutrient data.")
-
-# --- Inputs ---
-crop_type = st.selectbox("Crop Type", ["Corn", "Potato", "Rice", "Sugarcane", "Wheat"])
-soil_type = st.selectbox("Soil Type", ["Clay", "Loamy", "Peaty", "Saline", "Sandy"])
-soil_ph = st.number_input("Soil pH", min_value=0.0, max_value=14.0, value=6.5)
-temperature = st.slider("Temperature (°C)", 10, 40, 25)
-humidity = st.slider("Humidity (%)", 0, 100, 50)
-wind_speed = st.slider("Wind Speed (km/h)", 0, 100, 15)
-n = st.number_input("Nitrogen (N)", min_value=0, value=60)
-p = st.number_input("Phosphorus (P)", min_value=0, value=45)
-k = st.number_input("Potassium (K)", min_value=0, value=31)
-soil_quality = st.number_input("Soil Quality (0–100)", min_value=0, max_value=100, value=50)
-
-# --- Encode Inputs ---
-crop_encoded = {"Corn": 0, "Potato": 1, "Rice": 2, "Sugarcane": 3, "Wheat": 4}[crop_type]
-soil_encoded = {"Clay": 0, "Loamy": 1, "Peaty": 2, "Saline": 3, "Sandy": 4}[soil_type]
-input_features = np.array([[crop_encoded, soil_encoded, soil_ph, temperature, humidity,
-                            wind_speed, n, p, k, soil_quality]])
-
-# --- Predict Button ---
+# ----------------- PREDICTION -----------------
 if st.button("Predict Yield"):
     try:
-        prediction = model.predict(input_features)
-        st.success(f"Predicted Crop Yield: **{prediction[0]:.2f} tons/hectare**")
+        prediction = model.predict(input_data)
+        yield_value = prediction[0]
+        st.success(f"***Estimated Crop Yield:*** {yield_value:.2f} tons/hectare")
 
-        # --- GPT Prompt ---
+        # ----------------- GPT PROMPT -----------------
         prompt = f"""
         A Nigerian farmer is growing {crop_type} with the following:
         - Soil: {soil_type}, pH: {soil_ph}, Quality: {soil_quality}/100
         - Temp: {temperature}°C, Humidity: {humidity}%, Wind: {wind_speed} km/h
         - Nutrients - N: {n}, P: {p}, K: {k}
-        - Predicted yield: {prediction[0]:.2f} tons/hectare
+        - Predicted yield: {yield_value:.2f} tons/hectare
 
         As FarmConsultAI, provide:
         1. A warm greeting and confirm the predicted yield and crop.
@@ -109,7 +90,7 @@ if st.button("Predict Yield"):
         Use local, simple and clear terms.
         """
 
-        with st.spinner("FarmConsultAI is writing advice..."):
+        with st.spinner("Generating advice from FarmConsultAI..."):
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=system_prompt + [{"role": "user", "content": prompt}],
@@ -117,12 +98,12 @@ if st.button("Predict Yield"):
                 max_tokens=500
             )
             advice = response.choices[0].message["content"]
-            st.markdown("### FarmConsultAI Advice")
+            st.markdown("###FarmConsultAI Advice")
             st.info(advice)
 
     except Exception as e:
         st.error(f"Prediction failed: {e}")
 
-# --- Footer ---
+# ----------------- FOOTER -----------------
 st.markdown("---")
 st.caption("Powered by Scikit-Learn + OpenAI | Built with ❤️ for Nigerian Farmers")
