@@ -16,8 +16,7 @@ openai.api_key = st.secrets["OPENAI_API_KEY"]
 # ----------------- MODEL FILE IDs -----------------
 model_file_id = "1QXq2c3Gl2SjK1dM7bIOCvXSxK0hbVXnS"
 scaler_file_id = "1Vkb1Ew3RXY_ywEYyHEH1m8j1AMt3n8qe"
-pca_file_id = "1NTVjwe8Iv2tuZChf0XWugS1XhOq8ESXP"
-
+pca_file_id = "1A9oxNv2S-9hDNgFLsQNRedYd7YaCTlnw"
 model_url = f"https://drive.google.com/uc?id={model_file_id}"
 scaler_url = f"https://drive.google.com/uc?id={scaler_file_id}"
 pca_url = f"https://drive.google.com/uc?id={pca_file_id}"
