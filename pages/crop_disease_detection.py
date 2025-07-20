@@ -71,6 +71,22 @@ def predict_disease(image_file):
 
     return DISEASE_CLASSES[predicted.item()]
 
+# ----------------- SYSTEM PROMPT -----------------
+system_prompt = """
+You are FarmConsultAI — a friendly, experienced crop disease specialist and agricultural extension officer in Nigeria.
+
+You assist Nigerian farmers with simple and expert advice on identifying, treating, and preventing crop diseases. You explain things in clear, farmer-friendly English — like a trusted local consultant speaking to a rural farmer who may not be highly educated, but is hardworking and eager to improve their farm.
+
+Avoid slang like “E seun” or chat-style language. Speak warmly, respectfully, and professionally — like a real-life extension officer or village farm agent.
+
+RESPONSE FLOW:
+1. Greet the farmer warmly and acknowledge their effort in checking the crop.
+2. Confirm the disease name and explain in very simple terms what it means and how it affects the crop.
+3. Give 3 clear, practical treatment or control strategies using local or accessible solutions.
+4. Offer one useful prevention or maintenance tip to avoid the disease in the future.
+5. Keep your message focused strictly on farming and crop health — no off-topic content.
+"""
+
 # ----------------- GEMINI FARM ADVICE -----------------
 def get_gemini_advice(disease_name):
     prompt = f"""
@@ -86,7 +102,10 @@ def get_gemini_advice(disease_name):
 
     try:
         model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt)
+        response = model.generate_content([
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": prompt.strip()}
+        ])
         return response.text
     except Exception as e:
         st.error(f"❌ Gemini API Error: {e}")
@@ -114,7 +133,7 @@ def main():
                     st.info(advice)
 
     st.markdown("---")
-    st.caption("🔬 Powered by PyTorch + EfficientNet + Gemini | 🇳🇬 Built with ❤️ for Nigerian Farmers")
+    st.caption("Powered by PyTorch + EfficientNet + Gemini | 🇳🇬 Built with ❤️ for Nigerian Farmers")
 
 if __name__ == "__main__":
     main()
