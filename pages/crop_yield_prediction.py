@@ -14,16 +14,9 @@ os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # ----------------- MODEL FILE IDs -----------------
-model_file_id = "1QXq2c3Gl2SjK1dM7bIOCvXSxK0hbVXnS"
-scaler_file_id = "1Vkb1Ew3RXY_ywEYyHEH1m8j1AMt3n8qe"
-pca_file_id = "1A9oxNv2S-9hDNgFLsQNRedYd7YaCTlnw"
+model_file_id = "1lDIpOAM4jLx7wbnBlB9360z98twaprvG"
 model_url = f"https://drive.google.com/uc?id={model_file_id}"
-scaler_url = f"https://drive.google.com/uc?id={scaler_file_id}"
-pca_url = f"https://drive.google.com/uc?id={pca_file_id}"
-
 model_path = "crop_yield_model.pkl"
-scaler_path = "scaler.pkl"
-pca_path = "pca.pkl"
 
 # ----------------- LOADERS -----------------
 @st.cache_resource
@@ -36,8 +29,6 @@ def load_pickle_file(url, path, desc):
 
 try:
     model = load_pickle_file(model_url, model_path, "Crop Yield Model")
-    scaler = load_pickle_file(scaler_url, scaler_path, "Scaler")
-    pca = load_pickle_file(pca_url, pca_path, "PCA Transformer")
 except Exception as e:
     st.error(f"Error loading model components. Details: {e}")
     st.stop()
@@ -98,9 +89,7 @@ input_features = np.array([[crop_encoded, soil_encoded, soil_ph, temperature, hu
 # --- Predict Button ---
 if st.button("Predict Yield"):
     try:
-        input_scaled = scaler.transform(input_features)
-        input_pca = pca.transform(input_scaled)
-        prediction = model.predict(input_pca)
+        prediction = model.predict(input_features)
         st.success(f"Predicted Crop Yield: **{prediction[0]:.2f} tons/hectare**")
 
         # --- GPT Prompt ---
