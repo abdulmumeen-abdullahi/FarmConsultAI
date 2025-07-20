@@ -12,7 +12,7 @@ st.write("Estimate your farm's crop yield using soil, weather, and nutrient data
 
 # ----------------- SET GEMINI API KEY -----------------
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-chat = genai.GenerativeModel("gemini-pro").start_chat(history=[])
+chat = genai.GenerativeModel("gemini-1.5-flash").start_chat(history=[])
 
 # ----------------- LOAD MODEL -----------------
 model_file_id = "1lDIpOAM4jLx7wbnBlB9360z98twaprvG"
