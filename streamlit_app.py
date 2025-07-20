@@ -10,7 +10,7 @@ Original file is located at
 import streamlit as st
 
 # Page configuration
-st.set_page_config(page_title='NaijaFarmConsultAI', page_icon='🌾', layout='wide')
+st.set_page_config(page_title='FarmConsultAI', page_icon='🌾', layout='wide')
 
 # Page links
 st.page_link("streamlit_app.py", label="HOME")
@@ -45,17 +45,17 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Main content
-st.title("NaijaFarmConsultAI")
+st.title("FarmConsultAI")
 st.header("Empowering Nigerian Farmers with AI")
 
 st.write("""
-Welcome to NaijaFarmConsultAI, your intelligent assistant for better farming decisions!
+Welcome to FarmConsultAI, your intelligent assistant for better farming decisions!
 We combine advanced AI tools with local agricultural knowledge to help farmers ***diagnose crop diseases*** from images and ***predict crop yields*** using environmental and soil data.
 
-Whether you're a farmer in Kaduna, an agri-entrepreneur in Abia, or a student learning agriculture in Kwara, NaijaFarmConsultAI is here to support you every step of the way!
+Whether you're a farmer in Kaduna, an agri-entrepreneur in Abia, or a student learning agriculture in Kwara, FarmConsultAI is here to support you every step of the way!
 """)
 
-st.subheader("What Can NaijaFarmConsultAI Do?")
+st.subheader("What Can FarmConsultAI Do?")
 st.markdown("""
 - **Crop Yield Prediction**: Estimate how much your farm will produce based on soil, weather, and nutrient data.
 - **Crop Disease Diagnosis**: Upload a photo of a sick crop and get instant analysis and AI-powered treatment advice.
