@@ -71,6 +71,20 @@ def predict_disease(image_file):
 
     return DISEASE_CLASSES[predicted.item()]
 
+# ----------------- FORMAT DISEASE LABEL -----------------
+def format_disease_label(raw_label):
+    if "___" in raw_label:
+        crop, disease = raw_label.split("___")
+        disease = disease.replace("_", " ").strip()
+        return f"{crop} - {disease}"
+    elif "__" in raw_label:
+        crop, disease = raw_label.split("__")
+        disease = disease.replace("_", " ").strip()
+        return f"{crop} - {disease}"
+    else:
+        return raw_label.replace("_", " ").strip()
+
+
 # ----------------- SYSTEM PROMPT -----------------
 system_prompt = """
 You are FarmConsultAI — a friendly, experienced crop disease specialist and agricultural extension officer in Nigeria.
@@ -124,7 +138,8 @@ def main():
         if st.button("Diagnose Disease"):
             with st.spinner("Running diagnosis..."):
                 disease_prediction = predict_disease(uploaded_file)
-            st.success(f"Predicted Disease: **{disease_prediction}**")
+                readable_name = format_disease_label(disease_prediction)
+            st.success(f"Predicted Disease: **{readable_name}**")
 
             with st.spinner("FarmConsultAI is writing advice..."):
                 advice = get_gemini_advice(disease_prediction)
