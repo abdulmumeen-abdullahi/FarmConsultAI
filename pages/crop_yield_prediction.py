@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import os
 import gdown
-import openai
+from openai import OpenAI
 
 # ----------------- CONFIG -----------------
 st.set_page_config(page_title="FarmConsultAI - Crop Yield Prediction", layout="centered")
@@ -11,8 +11,7 @@ st.title("FarmConsultAI - Crop Yield Prediction")
 st.write("Estimate your farm's crop yield using soil, weather, and nutrient data.")
 
 # ----------------- SET API KEY -----------------
-os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # ----------------- LOAD MODEL -----------------
 model_file_id = "1lDIpOAM4jLx7wbnBlB9360z98twaprvG"
@@ -30,7 +29,7 @@ def load_model():
 try:
     model = load_model()
 except Exception as e:
-    st.error(f"Failed to load model: {e}")
+    st.error(f"❌ Failed to load model: {e}")
     st.stop()
 
 # ----------------- USER INPUTS -----------------
@@ -52,8 +51,9 @@ input_data = np.array([[crop_encoded, soil_encoded, soil_ph, temperature, humidi
                         wind_speed, n, p, k, soil_quality]])
 
 # ----------------- GPT SYSTEM PROMPT -----------------
-system_prompt = [
-    {"role": "system", "content": """
+system_prompt = {
+    "role": "system", 
+    "content": """
         You are FarmConsultAI, a friendly and knowledgeable agricultural consultant and extension officer in Nigeria.
         You assist farmers with expert advice on crop yield, farm conditions, and yield improvement.
         Use simple, local, and warm language, like a trusted rural consultant and extension officer.
@@ -64,17 +64,16 @@ system_prompt = [
         3. Recommend 3 ways to improve the yield in this context.
         4. Give one prevention or maintenance tip for sustained yield.
         5. Do not ask questions or offer further assistance.
-    """}
-]
+    """
+}
 
 # ----------------- PREDICTION -----------------
 if st.button("Predict Yield"):
     try:
         prediction = model.predict(input_data)
         yield_value = prediction[0]
-        st.success(f"***Estimated Crop Yield:*** {yield_value:.2f} tons/hectare")
+        st.success(f"**Estimated Crop Yield:** {yield_value:.2f} tons/hectare")
 
-        # ----------------- GPT PROMPT -----------------
         prompt = f"""
         A Nigerian farmer is growing {crop_type} with the following:
         - Soil: {soil_type}, pH: {soil_ph}, Quality: {soil_quality}/100
@@ -91,18 +90,21 @@ if st.button("Predict Yield"):
         """
 
         with st.spinner("Generating advice from FarmConsultAI..."):
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=system_prompt + [{"role": "user", "content": prompt}],
+                messages=[
+                    system_prompt,
+                    {"role": "user", "content": prompt}
+                ],
                 temperature=0.7,
                 max_tokens=500
             )
-            advice = response.choices[0].message["content"]
+            advice = response.choices[0].message.content
             st.markdown("###FarmConsultAI Advice")
             st.info(advice)
 
     except Exception as e:
-        st.error(f"Prediction failed: {e}")
+        st.error(f"❌ Prediction failed: {e}")
 
 # ----------------- FOOTER -----------------
 st.markdown("---")
