@@ -71,11 +71,12 @@ system_prompt = [
         Use simple, local, and clear terms when explaining plant diseases. Maintain a warm tone like a trusted advisor.
 
         RESPONSE FLOW:
-        1. Start with a friendly greeting and confirmation of the crop disease identified.
-        2. Explain what the disease is and its effect on the crop.
-        3. Recommend 2–3 actionable treatment or control steps.
-        4. Give a quick prevention tip for the future.
-        5. Encourage the farmer to ask for more help if needed.
+        1. Greet and confirm the identified crop disease.
+        2. Explain what the disease is and its effect.
+        3. Recommend 3 simple treatment or control steps.
+        4. Give one prevention tip for the future.
+        5. Do not encourage follow-up questions. Only provide advice based on the diagnosis.
+
     """}
 ]
 
@@ -97,13 +98,7 @@ def get_completions_from_messages(messages, model="gpt-3.5-turbo", stream=True):
 # ----------------- STREAMLIT APP -----------------
 def main():
     st.title("NaijaFarmConsultAI - Crop Disease")
-    st.write("Upload an image of your crop to detect disease and chat with NaijaFarmConsultAI for expert advice.")
-
-    if "openai_model" not in st.session_state:
-        st.session_state["openai_model"] = "gpt-3.5-turbo"
-
-    if "messages" not in st.session_state:
-        st.session_state.messages = system_prompt.copy()
+    st.write("Upload an image of your crop to detect disease and get instant expert advice.")
 
     uploaded_file = st.file_uploader("Upload a crop image", type=["jpg", "jpeg", "png"])
 
@@ -115,54 +110,37 @@ def main():
                 disease_prediction = predict_disease(uploaded_file)
             st.success(f"Predicted Disease: **{disease_prediction}**")
 
-            st.session_state.messages.append({"role": "user", "content": f"What should I do for: {disease_prediction}?"})
+            # Generate prompt for AI advice
+            prompt = f"""
+            A Nigerian farmer uploaded a photo and you diagnosed the crop disease as **{disease_prediction}**.
 
-            with st.chat_message("assistant"):
-                message_placeholder = st.empty()
-                full_response = ""
+            As NaijaFarmConsultAI, explain:
+            - What this disease is and how it affects the crop.
+            - 2 or 3 simple treatments or control strategies.
+            - One practical prevention tip.
 
-                response_stream = get_completions_from_messages(
-                    messages=st.session_state.messages,
-                    model=st.session_state["openai_model"],
-                    stream=True
-                )
+            Use simple, clear, local language, and sound like a friendly extension officer.
+            """
 
-                if response_stream:
-                    for chunk in response_stream:
-                        if chunk.choices[0].delta.content:
-                            full_response += chunk.choices[0].delta.content
-                            message_placeholder.markdown(full_response + "▌")
-                    message_placeholder.markdown(full_response)
-                    st.session_state.messages.append({"role": "assistant", "content": full_response})
-                else:
-                    st.info("AI could not respond right now. Please try again in a few seconds.")
+            try:
+                with st.spinner("NaijaFarmConsultAI is writing advice..."):
+                    response = openai.ChatCompletion.create(
+                        model="gpt-3.5-turbo",
+                        messages=[
+                            {"role": "system", "content": "You are a helpful agricultural advisor for Nigerian farmers."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.7,
+                        max_tokens=500
+                    )
+                    advice = response.choices[0].message["content"]
+                    st.markdown("###NaijaFarmConsultAI Advice")
+                    st.info(advice)
 
-    # --- Chat Input for Follow-ups ---
-    if user_prompt := st.chat_input("Ask NaijaFarmConsultAI anything about your crop health..."):
-        st.session_state.messages.append({"role": "user", "content": user_prompt})
-
-        with st.chat_message("user"):
-            st.markdown(user_prompt)
-
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            full_response = ""
-
-            response_stream = get_completions_from_messages(
-                messages=st.session_state.messages,
-                model=st.session_state["openai_model"],
-                stream=True
-            )
-
-            if response_stream:
-                for chunk in response_stream:
-                    if chunk.choices[0].delta.content:
-                        full_response += chunk.choices[0].delta.content
-                        message_placeholder.markdown(full_response + "▌")
-                message_placeholder.markdown(full_response)
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
-            else:
-                st.info("AI could not respond right now. Please try again in a few seconds.")
+            except openai.error.RateLimitError:
+                st.error("🚫 Rate limit reached. Please wait a few seconds and try again.")
+            except Exception as e:
+                st.error(f"❌ Something went wrong: {e}")
 
     st.markdown("---")
     st.caption("Powered by PyTorch + EfficientNet + OpenAI | Built with ❤️ for Nigerian Farmers")
