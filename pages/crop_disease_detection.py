@@ -17,11 +17,17 @@ st.set_page_config(page_title="FarmConsultAI - Crop Disease", layout="centered")
 # ----------------- GEMINI API CONFIG -----------------
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
+# ----------------- INIT CHAT SESSION -----------------
+if "disease_chat" not in st.session_state:
+    st.session_state.disease_chat = genai.GenerativeModel("gemini-1.5-flash").start_chat(history=[])
+    st.session_state.disease_chat_history = []
+    st.session_state.last_disease_advice = None
+
 # ----------------- CONSTANTS -----------------
 DISEASE_MODEL_ID = "1O-K4s3tv3WTSouhUksPDA5u6gNQ_d0j1"
 DISEASE_MODEL_PATH = "best_crop_disease_model.pt"
 
-DISEASE_CLASSES = [
+CLASSES = [
     'Corn___Common_Rust', 'Corn___Gray_Leaf_Spot', 'Corn___Healthy', 'Corn___Northern_Leaf_Blight',
     'Potato___Early_Blight', 'Potato___Healthy', 'Potato___Late_Blight',
     'Rice___Brown_Spot', 'Rice___Healthy', 'Rice___Leaf_Blast', 'Rice___Neck_Blast',
@@ -69,7 +75,7 @@ def predict_disease(image_file):
         outputs = model(input_tensor)
         _, predicted = torch.max(outputs, 1)
 
-    return DISEASE_CLASSES[predicted.item()]
+    return CLASSES[predicted.item()]
 
 # ----------------- FORMAT DISEASE LABEL -----------------
 def format_disease_label(raw_label):
@@ -104,26 +110,28 @@ RESPONSE FLOW:
 # ----------------- GEMINI FARM ADVICE -----------------
 def get_gemini_advice(disease_name):
     prompt = f"""
-    A Nigerian farmer uploaded a photo and the crop disease was diagnosed as **{disease_name}**.
+A Nigerian farmer uploaded a photo and the crop disease was diagnosed as **{disease_name}**.
 
-    As FarmConsultAI, explain:
-    - What this disease is and how it affects the crop.
-    - 3 simple treatments or control strategies.
-    - One practical prevention tip.
+As FarmConsultAI, explain:
+- What this disease is and how it affects the crop.
+- 3 simple treatments or control strategies.
+- One practical prevention tip to avoid future occurrence.
 
-    Use simple, clear, local Nigerian farmer language and sound like a friendly extension officer.
-    """
+Use simple, clear, local Nigerian farmer language and sound like a friendly extension officer.
+"""
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content([
-            {"role": "system", "content": system_prompt.strip()},
-            {"role": "user", "content": prompt.strip()}
-        ])
-        return response.text
+        chat = st.session_state.disease_chat
+        chat.send_message(system_prompt)
+        reply = chat.send_message(prompt)
+        st.session_state.last_disease_advice = reply.text
+        st.session_state.disease_chat_history.append(("Farmer", f"My crop has {disease_name}"))
+        st.session_state.disease_chat_history.append(("FarmConsultAI", reply.text))
+        return reply.text
     except Exception as e:
         st.error(f"❌ Gemini API Error: {e}")
         return None
+
 
 # ----------------- MAIN APP -----------------
 def main():
@@ -143,12 +151,30 @@ def main():
 
             with st.spinner("FarmConsultAI is writing advice..."):
                 advice = get_gemini_advice(disease_prediction)
-                if advice:
-                    st.markdown("### FarmConsultAI Advice")
-                    st.info(advice)
+
+        # ----------------- DISPLAY CHAT -----------------
+        if st.session_state.last_disease_advice:
+            st.subheader("💬 FarmConsultAI Advice & Chat")
+            for role, message in st.session_state.disease_chat_history:
+                with st.chat_message("user" if role == "Farmer" else "assistant"):
+                    st.markdown(message)
+
+            follow_up = st.chat_input("Ask follow-up question about this disease")
+
+            if follow_up:
+                with st.chat_message("user"):
+                    st.markdown(follow_up)
+
+                with st.spinner("FarmConsultAI is thinking..."):
+                    st.session_state.disease_chat_history.append(("Farmer", follow_up))
+                    reply = st.session_state.disease_chat.send_message(follow_up)
+                    st.session_state.disease_chat_history.append(("FarmConsultAI", reply.text))
+
+                with st.chat_message("assistant"):
+                    st.markdown(reply.text)
 
     st.markdown("---")
-    st.caption("Powered by PyTorch + EfficientNet + Gemini | 🇳🇬 Built with ❤️ for Nigerian Farmers")
+    st.caption("Powered by PyTorch + EfficientNet + Gemini | Built with ❤️ for Nigerian Farmers")
 
 if __name__ == "__main__":
     main()
