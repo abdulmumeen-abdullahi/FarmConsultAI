@@ -11,14 +11,13 @@ from PIL import Image
 import torchvision.transforms as transforms
 import google.generativeai as genai
 
-# ----------------- CONFIG -----------------
+# ----------------- STREAMLIT CONFIG -----------------
 st.set_page_config(page_title="FarmConsultAI - Crop Disease", layout="centered")
 
-# ----------------- API KEY -----------------
-# Load Gemini API key securely
+# ----------------- GEMINI API CONFIG -----------------
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-# ----------------- MODEL PATHS -----------------
+# ----------------- CONSTANTS -----------------
 DISEASE_MODEL_ID = "1O-K4s3tv3WTSouhUksPDA5u6gNQ_d0j1"
 DISEASE_MODEL_PATH = "best_crop_disease_model.pt"
 
@@ -30,7 +29,7 @@ DISEASE_CLASSES = [
     'Wheat___Brown_Rust', 'Wheat___Healthy', 'Wheat___Yellow_Rust'
 ]
 
-# ----------------- MODEL LOADER -----------------
+# ----------------- DOWNLOAD + LOAD MODEL -----------------
 def download_model():
     if not os.path.exists(DISEASE_MODEL_PATH):
         url = f"https://drive.google.com/uc?id={DISEASE_MODEL_ID}"
@@ -40,20 +39,15 @@ def download_model():
 def load_model():
     download_model()
 
-    # Rebuild the same EfficientNet-B3 architecture
-    model = timm.create_model('efficientnet_b3', pretrained=False)  # No need to load pretrained again
-    model.classifier = nn.Sequential(
-        nn.Linear(in_features=1536, out_features=17)  # Must match training setup
-    )
+    model = timm.create_model('efficientnet_b3', pretrained=False)
+    model.classifier = nn.Sequential(nn.Linear(in_features=1536, out_features=len(DISEASE_CLASSES)))
 
-    # Load saved weights
     state_dict = torch.load(DISEASE_MODEL_PATH, map_location=torch.device("cpu"))
     model.load_state_dict(state_dict)
-
-    # Put model in evaluation mode
     model.eval()
     return model
 
+# ----------------- IMAGE PREPROCESSING -----------------
 def preprocess_image(image_file):
     image = Image.open(image_file).convert("RGB")
     transform = transforms.Compose([
@@ -62,11 +56,11 @@ def preprocess_image(image_file):
     ])
     return transform(image).unsqueeze(0)
 
+# ----------------- PREDICT DISEASE -----------------
 def predict_disease(image_file):
     model = load_model()
     input_tensor = preprocess_image(image_file)
 
-    # If you want to support GPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     input_tensor = input_tensor.to(device)
@@ -74,9 +68,10 @@ def predict_disease(image_file):
     with torch.no_grad():
         outputs = model(input_tensor)
         _, predicted = torch.max(outputs, 1)
+
     return DISEASE_CLASSES[predicted.item()]
 
-# ----------------- GEMINI AI RESPONSE -----------------
+# ----------------- GEMINI FARM ADVICE -----------------
 def get_gemini_advice(disease_name):
     prompt = f"""
     A Nigerian farmer uploaded a photo and the crop disease was diagnosed as **{disease_name}**.
@@ -97,12 +92,12 @@ def get_gemini_advice(disease_name):
         st.error(f"❌ Gemini API Error: {e}")
         return None
 
-# ----------------- STREAMLIT APP -----------------
+# ----------------- MAIN APP -----------------
 def main():
-    st.title("FarmConsultAI - Crop Disease")
-    st.write("Upload an image of your crop to detect disease and get instant expert advice.")
+    st.title("FarmConsultAI - Crop Disease Detector")
+    st.write("Upload an image of your crop to detect any disease and get instant expert advice.")
 
-    uploaded_file = st.file_uploader("Upload a crop image", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("📸 Upload a crop image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
         st.image(uploaded_file, caption="Your Uploaded Image", use_container_width=True)
@@ -119,7 +114,7 @@ def main():
                     st.info(advice)
 
     st.markdown("---")
-    st.caption("Powered by PyTorch + EfficientNet + Gemini | Built with ❤️ for Nigerian Farmers")
+    st.caption("🔬 Powered by PyTorch + EfficientNet + Gemini | 🇳🇬 Built with ❤️ for Nigerian Farmers")
 
 if __name__ == "__main__":
     main()
