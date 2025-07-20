@@ -12,7 +12,7 @@ st.write("Estimate your farm's crop yield using soil, weather, and nutrient data
 
 # ----------------- SET GEMINI API KEY -----------------
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-gemini_model = genai.GenerativeModel("gemini-pro")
+chat = genai.GenerativeModel("gemini-pro").start_chat(history=[])
 
 # ----------------- LOAD MODEL -----------------
 model_file_id = "1lDIpOAM4jLx7wbnBlB9360z98twaprvG"
@@ -51,7 +51,7 @@ soil_encoded = {"Clay": 0, "Loamy": 1, "Peaty": 2, "Saline": 3, "Sandy": 4}[soil
 input_data = np.array([[crop_encoded, soil_encoded, soil_ph, temperature, humidity,
                         wind_speed, n, p, k, soil_quality]])
 
-# ----------------- SYSTEM PROMPT CONTENT -----------------
+# ----------------- SYSTEM PROMPT -----------------
 system_prompt = """
 You are FarmConsultAI, a friendly and knowledgeable agricultural consultant and extension officer in Nigeria.
 You assist farmers with expert advice on crop yield, farm conditions, and yield improvement.
@@ -65,35 +65,33 @@ RESPONSE FLOW:
 5. Do not ask questions or offer further assistance.
 """
 
-# ----------------- PREDICTION -----------------
+# ----------------- PREDICTION & GEMINI CHAT -----------------
 if st.button("Predict Yield"):
     try:
         prediction = model.predict(input_data)
         yield_value = prediction[0]
         st.success(f"**Estimated Crop Yield:** {yield_value:.2f} tons/hectare")
 
-        prompt = f"""
-        A Nigerian farmer is growing {crop_type} with the following:
-        - Soil: {soil_type}, pH: {soil_ph}, Quality: {soil_quality}/100
-        - Temp: {temperature}°C, Humidity: {humidity}%, Wind: {wind_speed} km/h
-        - Nutrients - N: {n}, P: {p}, K: {k}
-        - Predicted yield: {yield_value:.2f} tons/hectare
+        user_prompt = f"""
+A Nigerian farmer is growing {crop_type} with the following:
+- Soil: {soil_type}, pH: {soil_ph}, Quality: {soil_quality}/100
+- Temp: {temperature}°C, Humidity: {humidity}%, Wind: {wind_speed} km/h
+- Nutrients - N: {n}, P: {p}, K: {k}
+- Predicted yield: {yield_value:.2f} tons/hectare
 
-        As FarmConsultAI, provide:
-        1. A warm greeting and confirm the predicted yield and crop.
-        2. What this yield level means for Nigerian farmers.
-        3. Three practical tips to improve this yield.
-        4. One prevention or maintenance tip for future consistency and improvement.
-        Use local, simple and clear terms.
-        """
+As FarmConsultAI, provide:
+1. A warm greeting and confirm the predicted yield and crop.
+2. What this yield level means for Nigerian farmers.
+3. Three practical tips to improve this yield.
+4. One prevention or maintenance tip for future consistency and improvement.
+Use local, simple and clear terms.
+"""
 
-        with st.spinner("Generating advice from FarmConsultAI..."):
-            gemini_response = gemini_model.generate_content([
-                {"role": "system", "parts": [system_prompt]},
-                {"role": "user", "parts": [prompt]}
-            ])
+        with st.spinner("Getting advice from FarmConsultAI..."):
+            chat.send_message(system_prompt)  # inject system role content
+            gemini_reply = chat.send_message(user_prompt)
             st.markdown("### FarmConsultAI Advice")
-            st.info(gemini_response.text)
+            st.info(gemini_reply.text)
 
     except Exception as e:
         st.error(f"❌ Prediction failed: {e}")
