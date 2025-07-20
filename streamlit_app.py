@@ -14,8 +14,8 @@ st.set_page_config(page_title='AgriPredictAI', page_icon='🌾', layout='wide')
 
 # Page links
 st.page_link("streamlit_app.py", label="HOME", icon="🏡")
-st.page_link("pages/Crop_Yield_Prediction.py", label="Crop Yield Prediction")
-st.page_link("pages/Crop_Disease_Detection.py", label="Crop Disease Diagnosis")
+st.page_link("pages/crop_disease_detection.py", label="Crop Yield Prediction")
+st.page_link("pages/crop_yield_prediction.py", label="Crop Disease Diagnosis")
 
 # Background color and style
 background_color = "#F6FFF0"
