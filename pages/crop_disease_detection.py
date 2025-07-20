@@ -17,7 +17,7 @@ import openai
 from openai import OpenAI, RateLimitError
 
 # ----------------- CONFIG -----------------
-st.set_page_config(page_title="NaijaFarmConsultAI - Crop Disease", layout="centered")
+st.set_page_config(page_title="FarmConsultAI - Crop Disease", layout="centered")
 
 # Load OpenAI Key securely
 os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
@@ -66,7 +66,7 @@ def predict_disease(image_file):
 # ----------------- GPT CONTEXT -----------------
 system_prompt = [
     {"role": "system", "content": """
-        You are NaijaFarmConsultAI, a friendly and knowledgeable agricultural extension officer in Nigeria. 
+        You are FarmConsultAI, a friendly and knowledgeable agricultural extension officer in Nigeria. 
         You assist farmers with advice about crop diseases, management practices, and prevention. 
         Use simple, local, and clear terms when explaining plant diseases. Maintain a warm tone like a trusted advisor.
 
@@ -97,7 +97,7 @@ def get_completions_from_messages(messages, model="gpt-3.5-turbo", stream=True):
 
 # ----------------- STREAMLIT APP -----------------
 def main():
-    st.title("NaijaFarmConsultAI - Crop Disease")
+    st.title("FarmConsultAI - Crop Disease")
     st.write("Upload an image of your crop to detect disease and get instant expert advice.")
 
     uploaded_file = st.file_uploader("Upload a crop image", type=["jpg", "jpeg", "png"])
@@ -114,7 +114,7 @@ def main():
             prompt = f"""
             A Nigerian farmer uploaded a photo and you diagnosed the crop disease as **{disease_prediction}**.
 
-            As NaijaFarmConsultAI, explain:
+            As FarmConsultAI, explain:
             - What this disease is and how it affects the crop.
             - 2 or 3 simple treatments or control strategies.
             - One practical prevention tip.
@@ -123,7 +123,7 @@ def main():
             """
 
             try:
-                with st.spinner("NaijaFarmConsultAI is writing advice..."):
+                with st.spinner("FarmConsultAI is writing advice..."):
                     response = openai.ChatCompletion.create(
                         model="gpt-3.5-turbo",
                         messages=[
@@ -134,7 +134,7 @@ def main():
                         max_tokens=500
                     )
                     advice = response.choices[0].message["content"]
-                    st.markdown("###NaijaFarmConsultAI Advice")
+                    st.markdown("###FarmConsultAI Advice")
                     st.info(advice)
 
             except openai.error.RateLimitError:
