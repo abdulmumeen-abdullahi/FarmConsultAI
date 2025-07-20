@@ -16,7 +16,7 @@ openai.api_key = st.secrets["OPENAI_API_KEY"]
 # ----------------- MODEL FILE IDs -----------------
 model_file_id = "1lDIpOAM4jLx7wbnBlB9360z98twaprvG"
 model_url = f"https://drive.google.com/uc?id={model_file_id}"
-model_path = "crop_yield_model.pkl"
+model_path = "yield_best_random_model.pkl"
 
 # ----------------- LOADERS -----------------
 @st.cache_resource
