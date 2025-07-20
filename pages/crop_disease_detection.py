@@ -13,8 +13,8 @@ import os
 import gdown
 from PIL import Image
 import torchvision.transforms as transforms
-from openai import OpenAI
 import openai
+from openai import OpenAI, RateLimitError
 
 # ----------------- CONFIG -----------------
 st.set_page_config(page_title="NaijaFarmConsultAI - Crop Disease", layout="centered")
@@ -69,24 +69,30 @@ system_prompt = [
         You are NaijaFarmConsultAI, a friendly and knowledgeable agricultural extension officer in Nigeria. 
         You assist farmers with advice about crop diseases, management practices, and prevention. 
         Use simple, local, and clear terms when explaining plant diseases. Maintain a warm tone like a trusted advisor.
-        
+
         RESPONSE FLOW:
         1. Start with a friendly greeting and confirmation of the crop disease identified.
         2. Explain what the disease is and its effect on the crop.
         3. Recommend 2–3 actionable treatment or control steps.
         4. Give a quick prevention tip for the future.
         5. Encourage the farmer to ask for more help if needed.
-        """}
+    """}
 ]
 
 def get_completions_from_messages(messages, model="gpt-3.5-turbo", stream=True):
     client = OpenAI()
-    chat_completion = client.chat.completions.create(
-        messages=messages,
-        model=model,
-        stream=stream
-    )
-    return chat_completion
+    try:
+        return client.chat.completions.create(
+            messages=messages,
+            model=model,
+            stream=stream
+        )
+    except RateLimitError:
+        st.error("🚫 Rate limit reached. Please wait a few seconds and try again.")
+        return None
+    except Exception as e:
+        st.error(f"❌ Unexpected error: {e}")
+        return None
 
 # ----------------- STREAMLIT APP -----------------
 def main():
@@ -115,19 +121,21 @@ def main():
                 message_placeholder = st.empty()
                 full_response = ""
 
-                for chunk in get_completions_from_messages(
+                response_stream = get_completions_from_messages(
                     messages=st.session_state.messages,
                     model=st.session_state["openai_model"],
                     stream=True
-                ):
-                    if chunk.choices[0].delta.content:
-                        full_response += chunk.choices[0].delta.content
-                        message_placeholder.markdown(full_response + "▌")
+                )
 
-                message_placeholder.markdown(full_response)
-
-            # Save the assistant's full reply for context
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+                if response_stream:
+                    for chunk in response_stream:
+                        if chunk.choices[0].delta.content:
+                            full_response += chunk.choices[0].delta.content
+                            message_placeholder.markdown(full_response + "▌")
+                    message_placeholder.markdown(full_response)
+                    st.session_state.messages.append({"role": "assistant", "content": full_response})
+                else:
+                    st.info("AI could not respond right now. Please try again in a few seconds.")
 
     # --- Chat Input for Follow-ups ---
     if user_prompt := st.chat_input("Ask NaijaFarmConsultAI anything about your crop health..."):
@@ -140,21 +148,24 @@ def main():
             message_placeholder = st.empty()
             full_response = ""
 
-            for chunk in get_completions_from_messages(
+            response_stream = get_completions_from_messages(
                 messages=st.session_state.messages,
                 model=st.session_state["openai_model"],
                 stream=True
-            ):
-                if chunk.choices[0].delta.content:
-                    full_response += chunk.choices[0].delta.content
-                    message_placeholder.markdown(full_response + "▌")
+            )
 
-            message_placeholder.markdown(full_response)
-
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
+            if response_stream:
+                for chunk in response_stream:
+                    if chunk.choices[0].delta.content:
+                        full_response += chunk.choices[0].delta.content
+                        message_placeholder.markdown(full_response + "▌")
+                message_placeholder.markdown(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            else:
+                st.info("AI could not respond right now. Please try again in a few seconds.")
 
     st.markdown("---")
-    st.caption("🚀 Powered by PyTorch + EfficientNet + OpenAI | Built with ❤️ for Nigerian Farmers 🇳🇬")
+    st.caption("Powered by PyTorch + EfficientNet + OpenAI | Built with ❤️ for Nigerian Farmers")
 
 if __name__ == "__main__":
     main()
