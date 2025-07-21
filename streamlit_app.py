@@ -59,7 +59,7 @@ st.subheader("What Can FarmConsultAI Do?")
 st.markdown("""
 - **Crop Yield Prediction**: Estimate how much your farm will produce based on soil, weather, and nutrient data.
 - **Crop Disease Diagnosis**: Upload a photo of a sick crop and get instant analysis and AI-powered treatment advice.
-- **GPT-3.5 Assistant**: Get personalized farming advice in simple terms, for free.
+- **Gemini-1.5-flash Assistant**: Get personalized farming advice in simple terms, for free.
 
 > Built for smallholder farmers, cooperatives, and agri-entrepreneurs who want **actionable insights, not buzzwords**.
 """)
