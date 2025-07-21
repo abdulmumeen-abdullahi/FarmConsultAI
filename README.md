@@ -10,8 +10,8 @@ FarmConsultAI is an intelligent, AI-powered assistant designed to help farmers, 
 
 **This project integrates**:
 
-- A Machine Learning model that predicts crop yield based on land, weather, and input parameters.
-- A Computer Vision model that detects and classifies diseases from uploaded crop images.
+- A Random Forest Regressor Machine Learning model that predicts crop yield based on land, weather, and input parameters.
+- An EfficientNet-B3 Computer Vision model that detects and classifies diseases from uploaded crop images.
 - A Gemini-powered recommendation system that generates actionable, easy-to-understand advice in real time.
 - A Streamlit-based web app for user-friendly, interactive access anytime, anywhere.
 
