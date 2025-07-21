@@ -46,7 +46,7 @@ def load_model():
     download_model()
 
     model = timm.create_model('efficientnet_b3', pretrained=False)
-    model.classifier = nn.Sequential(nn.Linear(in_features=1536, out_features=len(DISEASE_CLASSES)))
+    model.classifier = nn.Sequential(nn.Linear(in_features=1536, out_features=len(CLASSES)))
 
     state_dict = torch.load(DISEASE_MODEL_PATH, map_location=torch.device("cpu"))
     model.load_state_dict(state_dict)
