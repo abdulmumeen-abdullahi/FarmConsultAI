@@ -69,6 +69,6 @@ This is not just an app. It’s a step toward a more resilient, productive, and 
 
 ----------------------------------------------------------------------------------------------- <br/>
 Abdullahi Olalekan Abdulmumeen <br/>
-AI/ML Engineer in Training <br/>
+AI/ML Engineer (in Training) <br/>
 olalekanabdulmumeen3@gmail.com <br/>
 +234 705 305 3024 <br/>
