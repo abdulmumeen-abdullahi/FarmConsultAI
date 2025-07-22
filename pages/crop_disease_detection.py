@@ -37,12 +37,12 @@ CLASSES = [
 # ----------------- DOWNLOAD + LOAD MODEL -----------------
 @st.cache_resource
 def load_model():
-    download_model()
+    model_path = hf_hub_download(repo_id=REPO_ID, filename=MODEL_FILENAME)
 
     model = timm.create_model('efficientnet_b3', pretrained=False)
     model.classifier = nn.Sequential(nn.Linear(in_features=1536, out_features=len(CLASSES)))
 
-    state_dict = torch.load(DISEASE_MODEL_PATH, map_location=torch.device("cpu"))
+    state_dict = torch.load(model_path, map_location=torch.device("cpu"))
     model.load_state_dict(state_dict)
     model.eval()
     return model
