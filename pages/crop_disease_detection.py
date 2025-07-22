@@ -4,6 +4,7 @@
 import streamlit as st
 import torch
 import torch.nn as nn
+import timm
 from PIL import Image
 from torchvision import transforms
 from huggingface_hub import hf_hub_download
@@ -36,16 +37,14 @@ CLASSES = [
 # ----------------- DOWNLOAD + LOAD MODEL -----------------
 @st.cache_resource
 def load_model():
-    model_path = hf_hub_download(repo_id=REPO_ID, filename=MODEL_FILENAME)
+    download_model()
 
-    # Recreate model exactly as trained
-    model = timm.create_model('efficientnet_b3', pretrained=False, num_classes=len(CLASSES))
+    model = timm.create_model('efficientnet_b3', pretrained=False)
+    model.classifier = nn.Sequential(nn.Linear(in_features=1536, out_features=len(CLASSES)))
 
-    # Load state dict safely
-    state_dict = torch.load(model_path, map_location=torch.device("cpu"))
+    state_dict = torch.load(DISEASE_MODEL_PATH, map_location=torch.device("cpu"))
     model.load_state_dict(state_dict)
     model.eval()
-
     return model
 
 
