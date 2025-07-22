@@ -38,9 +38,16 @@ CLASSES = [
 def load_model():
     model_path = hf_hub_download(repo_id=REPO_ID, filename=MODEL_FILENAME)
 
-    model = torch.load(model_path, map_location=torch.device("cpu"))
+    # Recreate model exactly as trained
+    model = timm.create_model('efficientnet_b3', pretrained=False, num_classes=len(CLASSES))
+
+    # Load state dict safely
+    state_dict = torch.load(model_path, map_location=torch.device("cpu"))
+    model.load_state_dict(state_dict)
     model.eval()
+
     return model
+
 
 # ----------------- IMAGE PREPROCESSING -----------------
 def preprocess_image(image_file):
