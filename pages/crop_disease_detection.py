@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Crop_Disease_Detection"""
+"""FarmConsultAI - Crop Disease Detector"""
 
 import streamlit as st
 import torch
-import os
-import gdown
-import timm
 import torch.nn as nn
 from PIL import Image
-import torchvision.transforms as transforms
+from torchvision import transforms
+from huggingface_hub import hf_hub_download
 import google.generativeai as genai
 
 # ----------------- STREAMLIT CONFIG -----------------
@@ -24,8 +22,8 @@ if "disease_chat" not in st.session_state:
     st.session_state.last_disease_advice = None
 
 # ----------------- CONSTANTS -----------------
-DISEASE_MODEL_ID = "1O-K4s3tv3WTSouhUksPDA5u6gNQ_d0j1"
-DISEASE_MODEL_PATH = "best_crop_disease_model.pt"
+REPO_ID = "VisionaryQuant/5_Crop_Disease_Detection"
+MODEL_FILENAME = "efficientnet_b3_model.pt"
 
 CLASSES = [
     'Corn___Common_Rust', 'Corn___Gray_Leaf_Spot', 'Corn___Healthy', 'Corn___Northern_Leaf_Blight',
@@ -36,20 +34,11 @@ CLASSES = [
 ]
 
 # ----------------- DOWNLOAD + LOAD MODEL -----------------
-def download_model():
-    if not os.path.exists(DISEASE_MODEL_PATH):
-        url = f"https://drive.google.com/uc?id={DISEASE_MODEL_ID}"
-        gdown.download(url, DISEASE_MODEL_PATH, quiet=False)
-
 @st.cache_resource
 def load_model():
-    download_model()
+    model_path = hf_hub_download(repo_id=REPO_ID, filename=MODEL_FILENAME)
 
-    model = timm.create_model('efficientnet_b3', pretrained=False)
-    model.classifier = nn.Sequential(nn.Linear(in_features=1536, out_features=len(CLASSES)))
-
-    state_dict = torch.load(DISEASE_MODEL_PATH, map_location=torch.device("cpu"))
-    model.load_state_dict(state_dict)
+    model = torch.load(model_path, map_location=torch.device("cpu"))
     model.eval()
     return model
 
@@ -58,7 +47,9 @@ def preprocess_image(image_file):
     image = Image.open(image_file).convert("RGB")
     transform = transforms.Compose([
         transforms.Resize((300, 300)),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225])
     ])
     return transform(image).unsqueeze(0)
 
@@ -72,24 +63,16 @@ def predict_disease(image_file):
     input_tensor = input_tensor.to(device)
 
     with torch.no_grad():
-        outputs = model(input_tensor)
-        _, predicted = torch.max(outputs, 1)
+        logits = model(input_tensor)
+        probs = torch.nn.functional.softmax(logits, dim=1)
+        predicted_idx = torch.argmax(probs, dim=1).item()
 
-    return CLASSES[predicted.item()]
+    return CLASSES[predicted_idx]
 
 # ----------------- FORMAT DISEASE LABEL -----------------
 def format_disease_label(raw_label):
-    if "___" in raw_label:
-        crop, disease = raw_label.split("___")
-        disease = disease.replace("_", " ").strip()
-        return f"{crop} - {disease}"
-    elif "__" in raw_label:
-        crop, disease = raw_label.split("__")
-        disease = disease.replace("_", " ").strip()
-        return f"{crop} - {disease}"
-    else:
-        return raw_label.replace("_", " ").strip()
-
+    label = raw_label.replace("___", " - ").replace("__", " - ").replace("_", " ")
+    return label.strip()
 
 # ----------------- SYSTEM PROMPT -----------------
 system_prompt = """
@@ -132,7 +115,6 @@ Use simple, clear, local Nigerian farmer language and sound like a friendly exte
         st.error(f"❌ Gemini API Error: {e}")
         return None
 
-
 # ----------------- MAIN APP -----------------
 def main():
     st.title("FarmConsultAI - Crop Disease Detector")
@@ -145,36 +127,36 @@ def main():
 
         if st.button("Diagnose Disease"):
             with st.spinner("Running diagnosis..."):
-                disease_prediction = predict_disease(uploaded_file)
-                readable_name = format_disease_label(disease_prediction)
-            st.success(f"Predicted Disease: **{readable_name}**")
+                prediction = predict_disease(uploaded_file)
+                readable = format_disease_label(prediction)
+            st.success(f"Predicted Disease: **{readable}**")
 
             with st.spinner("FarmConsultAI is writing advice..."):
-                advice = get_gemini_advice(disease_prediction)
+                get_gemini_advice(prediction)
 
-        # ----------------- DISPLAY CHAT -----------------
-        if st.session_state.last_disease_advice:
-            st.subheader("💬 FarmConsultAI Advice & Chat")
-            for role, message in st.session_state.disease_chat_history:
-                with st.chat_message("user" if role == "Farmer" else "assistant"):
-                    st.markdown(message)
+    # ----------------- DISPLAY CHAT -----------------
+    if st.session_state.last_disease_advice:
+        st.subheader("💬 FarmConsultAI Advice & Chat")
+        for role, msg in st.session_state.disease_chat_history:
+            with st.chat_message("user" if role == "Farmer" else "assistant"):
+                st.markdown(msg)
 
-            follow_up = st.chat_input("Ask follow-up question about this disease")
+        follow_up = st.chat_input("Ask a follow-up question about this disease")
 
-            if follow_up:
-                with st.chat_message("user"):
-                    st.markdown(follow_up)
+        if follow_up:
+            with st.chat_message("user"):
+                st.markdown(follow_up)
 
-                with st.spinner("FarmConsultAI is thinking..."):
-                    st.session_state.disease_chat_history.append(("Farmer", follow_up))
-                    reply = st.session_state.disease_chat.send_message(follow_up)
-                    st.session_state.disease_chat_history.append(("FarmConsultAI", reply.text))
+            with st.spinner("FarmConsultAI is thinking..."):
+                st.session_state.disease_chat_history.append(("Farmer", follow_up))
+                reply = st.session_state.disease_chat.send_message(follow_up)
+                st.session_state.disease_chat_history.append(("FarmConsultAI", reply.text))
 
-                with st.chat_message("assistant"):
-                    st.markdown(reply.text)
+            with st.chat_message("assistant"):
+                st.markdown(reply.text)
 
     st.markdown("---")
-    st.caption("Powered by PyTorch + EfficientNet + Gemini | Built with ❤️ for Nigerian Farmers")
+    st.caption("Powered by Hugging Face + EfficientNet + Gemini | Built with ❤️ for Nigerian Farmers")
 
 if __name__ == "__main__":
     main()
