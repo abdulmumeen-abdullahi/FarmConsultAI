@@ -9,4 +9,5 @@ numpy>=1.24.0
 gdown
 scikit-learn>=1.2.0
 google-generativeai
-timm
+timm>=0.9.2
+huggingface_hub>=0.20.3
