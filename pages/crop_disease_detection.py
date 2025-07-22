@@ -23,7 +23,7 @@ if "disease_chat" not in st.session_state:
 
 # ----------------- CONSTANTS -----------------
 REPO_ID = "VisionaryQuant/5_Crop_Disease_Detection"
-MODEL_FILENAME = "efficientnet_b3_model.pt"
+MODEL_FILENAME = "best_crop_disease_model.pt"
 
 CLASSES = [
     'Corn___Common_Rust', 'Corn___Gray_Leaf_Spot', 'Corn___Healthy', 'Corn___Northern_Leaf_Blight',
