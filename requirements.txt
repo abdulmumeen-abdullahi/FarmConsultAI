@@ -1,5 +1,5 @@
 ### File: requirements.txt
-streamlit>=1.30.0
+streamlit>=1.37.0
 torch>=2.1.0
 torchvision>=0.16.0
 Pillow>=10.0.0
