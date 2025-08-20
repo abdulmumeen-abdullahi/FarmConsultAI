@@ -67,4 +67,4 @@ st.markdown("""
 st.success("Let's help you grow more, waste less, and farm smarter!")
 
 st.markdown("---")
-st.caption("Powered by EfficientNet + Scikit-Learn + GPT-3.5 | Built with ❤️ for Nigerian farmers")
+st.caption("Powered by EfficientNet + Scikit-Learn + Gemini-1.5-flash | Built with ❤️ for Nigerian farmers")
