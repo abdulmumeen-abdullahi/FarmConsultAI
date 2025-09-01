@@ -141,7 +141,7 @@ def main():
 
             with st.spinner("FarmConsultAI is writing advice..."):
                 get_gemini_advice(prediction)
-    else:
+    elif captured_img:
         st.image(captured_img, caption="Your Captured Image", use_container_width=True)
 
         if st.button("Diagnose Disease"):
@@ -152,6 +152,8 @@ def main():
 
             with st.spinner("FarmConsultAI is writing advice..."):
                 get_gemini_advice(prediction)
+        else:
+            st.info("📸 Please upload an image or take a photo to start diagnosis.")
 
     # ----------------- DISPLAY CHAT -----------------
     if st.session_state.last_disease_advice:
