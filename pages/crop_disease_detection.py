@@ -142,12 +142,12 @@ def main():
             with st.spinner("FarmConsultAI is writing advice..."):
                 get_gemini_advice(prediction)
     else:
-        uploaded_img = Image.open(uploaded_file).convert("RGB")
-        st.image(uploaded_img, caption="Your Captured Image", use_container_width=True)
+        captured_img = Image.open(captured_file).convert("RGB")
+        st.image(captured_img, caption="Your Captured Image", use_container_width=True)
 
         if st.button("Diagnose Disease"):
             with st.spinner("Running diagnosis..."):
-                prediction = predict_disease(uploaded_img)
+                prediction = predict_disease(captured_img)
                 readable = format_disease_label(prediction)
             st.success(f"Predicted Disease: **{readable}**")
 
