@@ -125,8 +125,9 @@ Use simple, clear, local Nigerian farmer language and sound like a friendly exte
 def main():
     st.title("FarmConsultAI - Crop Disease Detector")
     st.write("Upload an image of your crop to detect any disease and get instant expert advice.")
-
-    uploaded_file = st.file_uploader("📸 Upload a crop image", type=["jpg", "jpeg", "png"])
+    
+    captured_file = st.camera_input("📸 Take a photo")
+    uploaded_img = st.file_uploader("📸 Upload a crop image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
         st.image(uploaded_file, caption="Your Uploaded Image", use_container_width=True)
@@ -134,6 +135,17 @@ def main():
         if st.button("Diagnose Disease"):
             with st.spinner("Running diagnosis..."):
                 prediction = predict_disease(uploaded_file)
+                readable = format_disease_label(prediction)
+            st.success(f"Predicted Disease: **{readable}**")
+
+            with st.spinner("FarmConsultAI is writing advice..."):
+                get_gemini_advice(prediction)
+        else:
+        st.image(uploaded_img, caption="Your Captured Image", use_container_width=True)
+
+        if st.button("Diagnose Disease"):
+            with st.spinner("Running diagnosis..."):
+                prediction = predict_disease(uploaded_img)
                 readable = format_disease_label(prediction)
             st.success(f"Predicted Disease: **{readable}**")
 
