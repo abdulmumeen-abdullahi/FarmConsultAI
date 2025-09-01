@@ -127,7 +127,7 @@ def main():
     st.title("FarmConsultAI - Crop Disease Detector")
     st.write("Upload an image of your crop to detect any disease and get instant expert advice.")
     
-    captured_file = st.camera_input("📸 Take a photo")
+    captured_img = st.camera_input("📸 Take a photo")
     uploaded_file = st.file_uploader("📸 Upload a crop image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
@@ -142,7 +142,6 @@ def main():
             with st.spinner("FarmConsultAI is writing advice..."):
                 get_gemini_advice(prediction)
     else:
-        captured_img = Image.open(captured_file).convert("RGB")
         st.image(captured_img, caption="Your Captured Image", use_container_width=True)
 
         if st.button("Diagnose Disease"):
