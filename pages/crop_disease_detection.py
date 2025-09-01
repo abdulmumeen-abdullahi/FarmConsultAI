@@ -9,6 +9,7 @@ from PIL import Image
 from torchvision import transforms
 from huggingface_hub import hf_hub_download
 import google.generativeai as genai
+from PIL import Image
 
 # ----------------- STREAMLIT CONFIG -----------------
 st.set_page_config(page_title="FarmConsultAI - Crop Disease", layout="centered")
@@ -127,7 +128,7 @@ def main():
     st.write("Upload an image of your crop to detect any disease and get instant expert advice.")
     
     captured_file = st.camera_input("📸 Take a photo")
-    uploaded_img = st.file_uploader("📸 Upload a crop image", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("📸 Upload a crop image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
         st.image(uploaded_file, caption="Your Uploaded Image", use_container_width=True)
@@ -140,7 +141,8 @@ def main():
 
             with st.spinner("FarmConsultAI is writing advice..."):
                 get_gemini_advice(prediction)
-        else:
+    else:
+        uploaded_img = Image.open(uploaded_file).convert("RGB")
         st.image(uploaded_img, caption="Your Captured Image", use_container_width=True)
 
         if st.button("Diagnose Disease"):
