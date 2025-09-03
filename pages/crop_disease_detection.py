@@ -27,6 +27,9 @@ if "disease_chat" not in st.session_state:
 REPO_ID = "VisionaryQuant/5_Crop_Disease_Detection"
 MODEL_FILENAME = "best_crop_disease_model.pt"
 
+# Confidence threshold
+CONF_THRESHOLD = 0.6
+
 CLASSES = [
     'Corn___Common_Rust', 'Corn___Gray_Leaf_Spot', 'Corn___Healthy', 'Corn___Northern_Leaf_Blight',
     'Potato___Early_Blight', 'Potato___Healthy', 'Potato___Late_Blight',
@@ -73,8 +76,14 @@ def predict_disease(image_file):
         logits = model(input_tensor)
         probs = torch.nn.functional.softmax(logits, dim=1)
         predicted_idx = torch.argmax(probs, dim=1).item()
+        top_prob, predicted_idx = torch.max(probs, dim=1)
 
-    return CLASSES[predicted_idx]
+    # If below threshold, say Unknown
+    if top_prob.item() < CONF_THRESHOLD:
+        return "Unknown", top_prob.item()
+
+    return CLASSES[predicted_idx], top_prob.item()
+
 
 # ----------------- FORMAT DISEASE LABEL -----------------
 def format_disease_label(raw_label):
@@ -135,23 +144,28 @@ def main():
 
         if st.button("Diagnose Disease"):
             with st.spinner("Running diagnosis..."):
-                prediction = predict_disease(uploaded_file)
+                prediction, confidence = predict_disease(uploaded_file)
                 readable = format_disease_label(prediction)
-            st.success(f"Predicted Disease: **{readable}**")
-
-            with st.spinner("FarmConsultAI is writing advice..."):
-                get_gemini_advice(prediction)
+                if prediction == "Unknown":
+                    st.warning("It seems this image is not a crop leaf, and the model could not make a confident prediction.")
+                else:
+                    st.success(f"Predicted Disease: **{readable}** (Confidence: {confidence:.2f})")
+                    with st.spinner("FarmConsultAI is writing advice..."):
+                        get_gemini_advice(prediction)
+    
     elif captured_img:
         st.image(captured_img, caption="Your Captured Image", use_container_width=True)
 
         if st.button("Diagnose Disease"):
             with st.spinner("Running diagnosis..."):
-                prediction = predict_disease(captured_img)
+                prediction, confidence = predict_disease(captured_img)
                 readable = format_disease_label(prediction)
-            st.success(f"Predicted Disease: **{readable}**")
-
-            with st.spinner("FarmConsultAI is writing advice..."):
-                get_gemini_advice(prediction)
+                if prediction == "Unknown":
+                    st.warning("It seems this image is not a crop leaf, and the model could not make a confident prediction.")
+                else:
+                    st.success(f"Predicted Disease: **{readable}** (Confidence: {confidence:.2f})")
+                    with st.spinner("FarmConsultAI is writing advice..."):
+                        get_gemini_advice(prediction)
         else:
             st.info("📸 Please upload an image or take a photo to start diagnosis.")
 
