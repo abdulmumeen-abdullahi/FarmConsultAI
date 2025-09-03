@@ -135,6 +135,7 @@ Use simple, clear, local Nigerian farmer language and sound like a friendly exte
 def main():
     st.title("FarmConsultAI - Crop Disease Detector")
     st.write("Upload an image of your crop to detect any disease and get instant expert advice.")
+    st.write("⚠️ NOTE: This app only supports Wheat, Sugarcane, Corn, Rice, and Potato leaves.")
 
     # File upload option
     uploaded_file = st.file_uploader("📸 Upload a crop image", type=["jpg", "jpeg", "png"])
