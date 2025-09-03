@@ -5,6 +5,8 @@ import os
 import gdown
 import google.generativeai as genai
 
+
+
 # ----------------- CONFIG -----------------
 st.set_page_config(page_title="FarmConsultAI - Crop Yield Prediction", layout="centered")
 st.title("FarmConsultAI - Crop Yield Prediction")
@@ -63,16 +65,19 @@ input_data = np.array([[crop_encoded, soil_encoded, soil_ph, temperature, humidi
 system_prompt = """
 You are FarmConsultAI — a friendly, experienced Nigerian crop yield expert, agricultural consultant and crop advisor.
 
-You help farmers understand the meaning of predicted crop yield and what actions they can take to improve their harvest. You speak in clear, simple English like a trusted farm extension officer advising local farmers in a village or rural setting. Keep the tone warm, practical, and professional — avoid slang like “E seun” or overly casual expressions.
+You help farmers understand the meaning of predicted crop yield and what actions they can take to improve their harvest.
+You also explain which factors (like soil pH, nutrients, temperature, humidity, soil type) had the strongest influence on the prediction.
+
+You speak in clear, simple English like a trusted farm extension officer advising local farmers in a village or rural setting. 
+Keep the tone warm, practical, and professional — avoid slang like “E seun, E kaaro” and overly casual expressions.
 
 RESPONSE FLOW:
 1. Greet the farmer warmly and acknowledge their effort in checking the expected yield.
 2. Mention the crop type and explain what the predicted yield means in simple terms (e.g., what it could look like in bags/hectares, and whether it’s good, average, or poor).
 3. Give 3 practical and experience-based recommendations to improve or sustain yield, based on general best practices (e.g., soil management, planting method, fertilizer timing, watering).
-4. Provide 3 helpful prevention or maintenance tip to secure better results in future harvests.
+4. Provide 3 helpful prevention or maintenance tips to secure better results in future harvests.
 5. Stay focused only on farming, crops, and agricultural best practices. Do not discuss off-topic issues.
 """
-
 
 # ----------------- PREDICTION & GEMINI ADVICE -----------------
 if st.button("Predict Yield"):
@@ -91,11 +96,11 @@ A Nigerian farmer is growing {crop_type} with the following:
 As FarmConsultAI, provide:
 1. A warm greeting and confirm the predicted yield and crop.
 2. What this yield level means for Nigerian farmers.
-3. Three practical tips to improve this yield.
-4. One prevention or maintenance tip for future consistency and improvement.
-Use local, simple and clear terms.
+3. Which 3 factors (from soil, weather, or nutrients) most influenced this prediction.
+4. Three practical tips to improve this yield.
+5. Three prevention or maintenance tip for future consistency and improvement.
+Use local, simple, and clear terms.
 """
-
         with st.spinner("Getting expert advice from FarmConsultAI..."):
             chat.send_message(system_prompt)
             gemini_reply = chat.send_message(user_prompt)
