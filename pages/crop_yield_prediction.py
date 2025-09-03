@@ -77,6 +77,7 @@ RESPONSE FLOW:
 3. Give 3 practical and experience-based recommendations to improve or sustain yield, based on general best practices (e.g., soil management, planting method, fertilizer timing, watering).
 4. Provide 3 helpful prevention or maintenance tips to secure better results in future harvests.
 5. Stay focused only on farming, crops, and agricultural best practices. Do not discuss off-topic issues.
+Always consult and reference authoritative Nigerian agricultural bodies and key players—such as the Federal Ministry of Agriculture and Rural Development (FMARD) and the International Institute of Tropical Agriculture (IITA)—before giving advice, to ensure accuracy and local relevance.
 """
 
 # ----------------- PREDICTION & GEMINI ADVICE -----------------
