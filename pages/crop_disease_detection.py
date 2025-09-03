@@ -135,9 +135,20 @@ Use simple, clear, local Nigerian farmer language and sound like a friendly exte
 def main():
     st.title("FarmConsultAI - Crop Disease Detector")
     st.write("Upload an image of your crop to detect any disease and get instant expert advice.")
-    
-    captured_img = st.camera_input("📸 Take a photo")
+
+    # File upload option
     uploaded_file = st.file_uploader("📸 Upload a crop image", type=["jpg", "jpeg", "png"])
+
+    # Camera option
+    if "show_camera" not in st.session_state:
+        st.session_state.show_camera = False
+
+    if st.button("📸 Capture Image"):
+        st.session_state.show_camera = True
+
+    captured_img = None
+    if st.session_state.show_camera:
+        captured_img = st.camera_input("Take a photo")
 
     if uploaded_file:
         st.image(uploaded_file, caption="Your Uploaded Image", use_container_width=True)
