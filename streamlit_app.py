@@ -45,7 +45,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Main content
-st.title("FarmConsultAI - 3MTT July Knowledge Showcase")
+st.title("FarmConsultAI")
 st.header("Empowering Nigerian Farmers with AI")
 
 st.write("""
