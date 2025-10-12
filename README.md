@@ -1,74 +1,94 @@
 # 🌾 FarmConsultAI – An Intelligent Assistant for Better Farming Decisions
 
-<img width="1366" height="768" alt="FarmConsultAI Home Page" src="https://github.com/user-attachments/assets/8ed6f535-065c-4e1f-8149-8e8b59894c0d" /> <br/>
+[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.35%2B-red.svg)](https://streamlit.io/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.1%2B-orange.svg)](https://pytorch.org/)
+[![Scikit-learn](https://img.shields.io/badge/Scikit--learn-1.3%2B-yellow.svg)](https://scikit-learn.org/)
 
-Agriculture remains the backbone of food security, yet millions of farmers, especially in developing regions, struggle with unpredictable weather, crop diseases, poor soil health, and limited access to expert advice. <br/>
-As an aspiring AI/ML Engineer passionate about solving real-world problems, I built FarmConsultAI to tackle these critical agricultural challenges using the power of Artificial Intelligence.
+<img width="1366" height="768" alt="FarmConsultAI Home Page" src="https://github.com/user-attachments/assets/8ed6f535-065c-4e1f-8149-8e8b59894c0d" />
 
-## Project Overview
-FarmConsultAI is an intelligent, AI-powered assistant designed to help farmers, agropreneurs, and agri-investors make smarter, faster, and more informed farming decisions. <br/>
+Agriculture is the backbone of food security, yet millions of farmers—especially in developing regions like Nigeria—struggle with unpredictable weather, crop diseases, and limited access to expert advice. I built FarmConsultAI to tackle these critical challenges by putting the power of AI directly into the hands of farmers.
 
-**This project integrates**:
+**🔗 Live Demo:** [**farmconsultai.streamlit.app**](https://farmconsultai.streamlit.app)
 
-- A Random Forest Regressor Machine Learning model that predicts crop yield based on land, weather, and input parameters.
-- An EfficientNet-B3 Computer Vision model that detects and classifies diseases from uploaded crop images.
-- A Gemini-powered recommendation system that generates actionable, easy-to-understand advice in real time.
-- A Streamlit-based web app for user-friendly, interactive access anytime, anywhere.
 
-### With FarmConsultAI, Farmers Can:
- 
-+ **Input crop type, along with land and weather conditions to predict potential yield**
+## 💡 Project Overview
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/c35db63d-6207-4099-b245-8bb0eebba0e3" width="45%">
-  <img src="https://github.com/user-attachments/assets/db8b43b1-12f2-4a87-badd-164c4c92bce0" width="45%">
-</p>
+FarmConsultAI is an intelligent, AI-powered web application designed to help farmers, agropreneurs, and agri-investors make smarter, data-driven decisions. It integrates machine learning, computer vision, and generative AI to provide a holistic farm advisory service.
 
-+ **Upload images of their crops and get instant disease diagnosis using an EfficientNet-B3 with explanation using AI**
+### Key Features
+
+* **📈 Crop Yield Prediction:** A **Random Forest Regressor** model predicts crop yield in tons/hectare based on soil type, weather conditions, and nutrient levels (N, P, K).
+* **🌿 Crop Disease Diagnosis:** An **EfficientNet-B3** computer vision model detects and classifies diseases from uploaded crop leaf images with high accuracy.
+* **💬 AI-Powered Advice:** **Google's Gemini** provides actionable recommendations and conversational follow-ups, explaining complex insights in simple, local-friendly language.
+* **🖥️ Interactive Web App:** A user-friendly interface built with **Streamlit** makes these powerful tools accessible on any device with an internet connection.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/34a0acc2-bf8a-41e2-afdf-14ed74cf542e" width="45%">
-  <img src="https://github.com/user-attachments/assets/d5f39648-19e8-4391-8538-16b5ab69fd13" width="45%">
+  <img src="https://github.com/user-attachments/assets/c35db63d-6207-4099-b245-8bb0eebba0e3" width="45%" alt="Yield Prediction Input">
+  <img src="https://github.com/user-attachments/assets/db8b43b1-12f2-4a87-badd-164c4c92bce0" width="45%" alt="Yield Prediction Output">
+</p>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/34a0acc2-bf8a-41e2-afdf-14ed74cf542e" width="45%" alt="Disease Detection Input">
+  <img src="https://github.com/user-attachments/assets/d5f39648-19e8-4391-8538-16b5ab69fd13" width="45%" alt="Disease Detection Output">
 </p>
 
-+ **Receive personalized, crop-specific advice based on soil and weather data** <br/>
-+ **Access AI-powered insights for 5 major crops: Corn, Potato, Rice, Sugarcane, and Wheat** <br/>
-+ **Chat with a virtual farm consultant, who explains insights and guidance in simple, local-friendly terms** <br/>
-+ **Understand yield risks caused by poor nutrients or environmental conditions** <br/>
-+ **Learn and act—not just react—through expert-backed, explainable recommendations** <br/>
 
-## Impact & Relevance
-FarmConsultAI is aligned with several UN Sustainable Development Goals (SDGs), including:
+## 🛠️ Tech Stack & Architecture
 
-- SDG 1 – No Poverty: By improving farm productivity and reducing losses
-- SDG 2 – Zero Hunger: Helping farmers grow more, waste less, and feed communities
-- SDG 13 – Climate Action: Promoting climate-smart agriculture through informed decision-making <br/>
-Whether you’re a smallholder farmer in Kaduna, an agri-entrepreneur in Abia, or a student learning agriculture in Ibadan, FarmConsultAI brings expert knowledge and digital tools right to your fingertips.
+This project combines multiple AI disciplines into a seamless user experience.
 
-## Tech Stack
-- Python
-- PyTorch & TIMM – Model training & image classification
-- Streamlit – for web-based deployment
-- Gemini (Google Generative AI) – for interactive recommendation engine
-- Pandas, NumPy, Sklearn – for yield prediction modeling
+* **Frontend:** `Streamlit`
+* **Yield Prediction:** `Scikit-learn`, `Pandas`, `NumPy`
+* **Disease Diagnosis:** `PyTorch`, `TIMM (PyTorch Image Models)`
+* **Generative AI & Chat:** `Google Generative AI (Gemini)`
+* **Deployment:** `Streamlit Community Cloud`
 
-## What I Learned
-- How to build effective Machine Learning and Computer Vision models for real-world problems
-- How to deploy AI models using Streamlit to create interactive, user-friendly web applications
-- How to integrate Gemini (Generative AI) to deliver personalized recommendations and conversational interactions
+The application follows a simple, effective architecture:
+1.  The **Streamlit UI** captures user inputs (form data for yield, images for diseases).
+2.  The inputs are processed and fed into the appropriate backend model (**Random Forest** or **EfficientNet-B3**).
+3.  The model's prediction is passed to the **Gemini API** along with a structured prompt.
+4.  Gemini generates a detailed, easy-to-understand explanation and actionable advice.
+5.  The final output and conversational chat interface are rendered back to the user in the Streamlit app.
 
-## Why This Matters
-In Nigeria and many other developing countries, farmers often lack access to agronomic expertise or accurate data. FarmConsultAI bridges this gap by providing instant access to AI-driven insights that were once out of reach. <br/>
-This is not just an app. It’s a step toward a more resilient, productive, and inclusive future for agriculture, starting in Nigeria, and expanding globally.
+---
 
-## Demo & GitHub
-🔗 Crop Yield Prediction GitHub Repo: [Link to GitHub Repository](https://github.com/abdulmumeen-abdullahi/Crops-Yield-Prediction-with-Environmental-Factors-and-Land-Nutrients) <br/>
-🔗 Crop Disease Detection and Classification GitHub Repo: [Link to GitHub Repository](https://github.com/abdulmumeen-abdullahi/Crop-Disease-Identification-and-Classification) <br/>
-🔗 Live Demo: [Streamlit App URL](https://farmconsultai.streamlit.app) <br/>
-🔗 Showcase Video: [Video Link] <br/>
+## 🚀 Installation & Usage
 
------------------------------------------------------------------------------------------------ <br/>
-Abdullahi Olalekan Abdulmumeen <br/>
-AI/ML Engineer (in Training) <br/>
-olalekanabdulmumeen3@gmail.com <br/>
-+234 705 305 3024 <br/>
+To run this project locally, follow these steps:
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/abdulmumeen-abdullahi/FarmConsultAI.git
+    cd FarmConsultAI
+    ```
+2.  **Install the required dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+3.  **Set up your API keys:**
+    Create a `.streamlit/secrets.toml` file and add your Gemini API key:
+    ```toml
+    GEMINI_API_KEY = "YOUR_API_KEY_HERE"
+    ```
+4.  **Run the Streamlit app:**
+    ```bash
+    streamlit run streamlit_app.py
+    ```
+
+---
+
+## 🎯 Impact & Relevance
+
+FarmConsultAI directly addresses several UN Sustainable Development Goals (SDGs):
+* **SDG 1 (No Poverty):** By improving farm productivity and reducing crop losses.
+* **SDG 2 (Zero Hunger):** Helping farmers grow more and waste less to feed communities.
+* **SDG 13 (Climate Action):** Promoting climate-smart agriculture through informed decision-making.
+
+In Nigeria, where farmers often lack access to timely agronomic expertise, this app bridges a critical knowledge gap. It democratizes access to AI-driven insights that were once out of reach, empowering a new generation of farmers.
+
+---
+
+## 🔗 Project Resources
+* **Live Demo:** [**https://farmconsultai.streamlit.app**](https://farmconsultai.streamlit.app)
+* **Crop Yield Prediction Sub-Repo:** [Link to GitHub Repository](https://github.com/abdulmumeen-abdullahi/Crops-Yield-Prediction-with-Environmental-Factors-and-Land-Nutrients)
+* **Crop Disease Detection Sub-Repo:** [Link to GitHub Repository](https://github.com/abdulmumeen-abdullahi/Crop-Disease-Identification-and-Classification)
