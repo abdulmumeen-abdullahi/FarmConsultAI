@@ -25,23 +25,39 @@ if "chat" not in st.session_state:
 chat = st.session_state.chat
 
 # ----------------- LOAD MODEL -----------------
-model_file_id = "1lDIpOAM4jLx7wbnBlB9360z98twaprvG"
-model_url = f"https://drive.google.com/uc?id={model_file_id}"
-model_path = "yield_best_random_model.pkl"
+# model_file_id = "1lDIpOAM4jLx7wbnBlB9360z98twaprvG"
+# model_url = f"https://drive.google.com/uc?id={model_file_id}"
+# model_path = "yield_best_random_model.pkl"
+
+
+
+REPO_ID = "VisionaryQuant/Crop_Yield_Prediction"
+MODEL_FILENAME = "crop_yield_best_random_model.pkl"
 
 @st.cache_resource
-def load_model():
-    if not os.path.exists(model_path):
-        with st.spinner("Downloading model..."):
-            gdown.download(model_url, model_path, quiet=False)
-    with open(model_path, "rb") as model_file:
-        return pickle.load(model_file)
+# def load_model():
+#     if not os.path.exists(model_path):
+#         with st.spinner("Downloading model..."):
+#             gdown.download(model_url, model_path, quiet=False)
+#     with open(model_path, "rb") as model_file:
+#         return pickle.load(model_file)
 
-try:
-    model = load_model()
-except Exception as e:
-    st.error(f"❌ Failed to load model: {e}")
-    st.stop()
+# try:
+#     model = load_model()
+# except Exception as e:
+#     st.error(f"❌ Failed to load model: {e}")
+#     st.stop()
+
+def load_model():
+    model_path = hf_hub_download(repo_id=REPO_ID, filename=MODEL_FILENAME)
+
+    model = timm.create_model('efficientnet_b3', pretrained=False)
+    model.classifier = nn.Sequential(nn.Linear(in_features=1536, out_features=len(CLASSES)))
+
+    state_dict = torch.load(model_path, map_location=torch.device("cpu"))
+    model.load_state_dict(state_dict)
+    model.eval()
+    return model
 
 # ----------------- USER INPUTS -----------------
 crop_type = st.selectbox("Crop Type", ["Corn", "Potato", "Rice", "Sugarcane", "Wheat"])
@@ -51,9 +67,9 @@ temperature = st.slider("Temperature (°C)", 10, 40, 25)
 humidity = st.slider("Humidity (%)", 0, 100, 50)
 wind_speed = st.slider("Wind Speed (km/h)", 0, 100, 15)
 n = st.number_input("Nitrogen (N)", min_value=0, value=60)
-p = st.number_input("Phosphorus (P)", min_value=0, value=45)
-k = st.number_input("Potassium (K)", min_value=0, value=31)
-soil_quality = st.number_input("Soil Quality", min_value=0, max_value=100, value=50)
+# p = st.number_input("Phosphorus (P)", min_value=0, value=45)
+# k = st.number_input("Potassium (K)", min_value=0, value=31)
+# soil_quality = st.number_input("Soil Quality", min_value=0, max_value=100, value=50)
 
 # ----------------- ENCODE INPUT -----------------
 crop_encoded = {"Corn": 0, "Potato": 1, "Rice": 2, "Sugarcane": 3, "Wheat": 4}[crop_type]
