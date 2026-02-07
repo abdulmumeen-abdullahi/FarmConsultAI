@@ -26,31 +26,10 @@ if "chat" not in st.session_state:
 chat = st.session_state.chat
 
 # ----------------- LOAD MODEL -----------------
-# model_file_id = "1lDIpOAM4jLx7wbnBlB9360z98twaprvG"
-# model_url = f"https://drive.google.com/uc?id={model_file_id}"
-# model_path = "yield_best_random_model.pkl"
-
-
-
 REPO_ID = "VisionaryQuant/Crop_Yield_Prediction"
 MODEL_FILENAME = "crop_yield_best_random_model.pkl"
 
 @st.cache_resource
-# def load_model():
-#     if not os.path.exists(model_path):
-#         with st.spinner("Downloading model..."):
-#             gdown.download(model_url, model_path, quiet=False)
-#     with open(model_path, "rb") as model_file:
-#         return pickle.load(model_file)
-
-# try:
-#     model = load_model()
-# except Exception as e:
-#     st.error(f"❌ Failed to load model: {e}")
-#     st.stop()
-
-
-
 def load_model():
     model_path = hf_hub_download(
         repo_id=REPO_ID,
@@ -59,8 +38,6 @@ def load_model():
     with open(model_path, "rb") as f:
         model = pickle.load(f)
     return model
-
-
 
 try:
     model = load_model()
@@ -76,16 +53,12 @@ temperature = st.slider("Temperature (°C)", 10, 40, 25)
 humidity = st.slider("Humidity (%)", 0, 100, 50)
 wind_speed = st.slider("Wind Speed (km/h)", 0, 100, 15)
 n = st.number_input("Nitrogen (N)", min_value=0, value=60)
-# p = st.number_input("Phosphorus (P)", min_value=0, value=45)
-# k = st.number_input("Potassium (K)", min_value=0, value=31)
-# soil_quality = st.number_input("Soil Quality", min_value=0, max_value=100, value=50)
 
 # ----------------- ENCODE INPUT -----------------
 crop_encoded = {"Corn": 0, "Potato": 1, "Rice": 2, "Sugarcane": 3, "Wheat": 4}[crop_type]
 soil_encoded = {"Clay": 0, "Loamy": 1, "Peaty": 2, "Saline": 3, "Sandy": 4}[soil_type]
 input_data = np.array([[crop_encoded, soil_encoded, soil_ph, temperature, humidity,
                         wind_speed, n]])
-#, p, k, soil_quality]])
 
 # ----------------- SYSTEM PROMPT -----------------
 system_prompt = """
@@ -114,11 +87,6 @@ if st.button("Predict Yield"):
         st.success(f"**Estimated Crop Yield:** {yield_value:.2f} tons/hectare")
 
         user_prompt = f"""
-# A Nigerian farmer is growing {crop_type} with the following:
-# - Soil: {soil_type}, pH: {soil_ph}, Quality: {soil_quality}/100
-# - Temp: {temperature}°C, Humidity: {humidity}%, Wind: {wind_speed} km/h
-# - Nutrients - N: {n}, P: {p}, K: {k}
-# - Predicted yield: {yield_value:.2f} tons/hectare
 
 A Nigerian farmer is growing {crop_type} with the following:
 - Soil: {soil_type}, pH: {soil_ph}
