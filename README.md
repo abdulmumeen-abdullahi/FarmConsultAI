@@ -18,7 +18,7 @@ FarmConsultAI is an intelligent, AI-powered web application designed to help far
 
 ### Key Features
 
-* **📈 Crop Yield Prediction:** A **Random Forest Regressor** model predicts crop yield in tons/hectare based on soil type, weather conditions, and nutrient levels (N, P, K).
+* **📈 Crop Yield Prediction:** A **Random Forest Regressor** model predicts crop yield in tons/hectare based on soil type, weather conditions, and Nitrogen level.
 * **🌿 Crop Disease Diagnosis:** An **EfficientNet-B3** computer vision model detects and classifies diseases from uploaded crop leaf images with high accuracy.
 * **💬 AI-Powered Advice:** **Google's Gemini** provides actionable recommendations and conversational follow-ups, explaining complex insights in simple, local-friendly language.
 * **🖥️ Interactive Web App:** A user-friendly interface built with **Streamlit** makes these powerful tools accessible on any device with an internet connection.
