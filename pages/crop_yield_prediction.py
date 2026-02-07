@@ -52,12 +52,6 @@ MODEL_FILENAME = "crop_yield_best_random_model.pkl"
 def load_model():
     model_path = hf_hub_download(repo_id=REPO_ID, filename=MODEL_FILENAME)
 
-    model = timm.create_model('efficientnet_b3', pretrained=False)
-    model.classifier = nn.Sequential(nn.Linear(in_features=1536, out_features=len(CLASSES)))
-
-    state_dict = torch.load(model_path, map_location=torch.device("cpu"))
-    model.load_state_dict(state_dict)
-    model.eval()
     return model
 
 # ----------------- USER INPUTS -----------------
