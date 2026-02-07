@@ -2,8 +2,9 @@ import streamlit as st
 import pickle
 import numpy as np
 import os
-import gdown
+# import gdown
 import google.generativeai as genai
+from huggingface_hub import hf_hub_download
 
 
 
@@ -75,7 +76,8 @@ n = st.number_input("Nitrogen (N)", min_value=0, value=60)
 crop_encoded = {"Corn": 0, "Potato": 1, "Rice": 2, "Sugarcane": 3, "Wheat": 4}[crop_type]
 soil_encoded = {"Clay": 0, "Loamy": 1, "Peaty": 2, "Saline": 3, "Sandy": 4}[soil_type]
 input_data = np.array([[crop_encoded, soil_encoded, soil_ph, temperature, humidity,
-                        wind_speed, n, p, k, soil_quality]])
+                        wind_speed, n]])
+#, p, k, soil_quality]])
 
 # ----------------- SYSTEM PROMPT -----------------
 system_prompt = """
@@ -104,10 +106,16 @@ if st.button("Predict Yield"):
         st.success(f"**Estimated Crop Yield:** {yield_value:.2f} tons/hectare")
 
         user_prompt = f"""
+# A Nigerian farmer is growing {crop_type} with the following:
+# - Soil: {soil_type}, pH: {soil_ph}, Quality: {soil_quality}/100
+# - Temp: {temperature}°C, Humidity: {humidity}%, Wind: {wind_speed} km/h
+# - Nutrients - N: {n}, P: {p}, K: {k}
+# - Predicted yield: {yield_value:.2f} tons/hectare
+
 A Nigerian farmer is growing {crop_type} with the following:
-- Soil: {soil_type}, pH: {soil_ph}, Quality: {soil_quality}/100
+- Soil: {soil_type}, pH: {soil_ph}
 - Temp: {temperature}°C, Humidity: {humidity}%, Wind: {wind_speed} km/h
-- Nutrients - N: {n}, P: {p}, K: {k}
+- Nutrients - N: {n}
 - Predicted yield: {yield_value:.2f} tons/hectare
 
 As FarmConsultAI, provide:
