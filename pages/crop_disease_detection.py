@@ -19,7 +19,7 @@ genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 # ----------------- INIT CHAT SESSION -----------------
 if "disease_chat" not in st.session_state:
-    st.session_state.disease_chat = genai.GenerativeModel("gemini-1.5-flash").start_chat(history=[])
+    st.session_state.disease_chat = genai.GenerativeModel("models/gemini-flash-latest").start_chat(history=[])
     st.session_state.disease_chat_history = []
     st.session_state.last_disease_advice = None
 
