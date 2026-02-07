@@ -49,10 +49,24 @@ MODEL_FILENAME = "crop_yield_best_random_model.pkl"
 #     st.error(f"❌ Failed to load model: {e}")
 #     st.stop()
 
-def load_model():
-    model_path = hf_hub_download(repo_id=REPO_ID, filename=MODEL_FILENAME)
 
+
+def load_model():
+    model_path = hf_hub_download(
+        repo_id=REPO_ID,
+        filename=MODEL_FILENAME
+    )
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
     return model
+
+
+
+try:
+    model = load_model()
+except Exception as e:
+    st.error(f"❌ Failed to load model: {e}")
+    st.stop()
 
 # ----------------- USER INPUTS -----------------
 crop_type = st.selectbox("Crop Type", ["Corn", "Potato", "Rice", "Sugarcane", "Wheat"])
