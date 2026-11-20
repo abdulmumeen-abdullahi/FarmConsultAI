@@ -54,26 +54,56 @@ The application follows a simple, effective architecture:
 
 ## 🚀 Installation & Usage
 
+### Prerequisites
+Before setting up the project locally, ensure you have the following:
+* **[Python](https://www.python.org/downloads/)** installed (recommended for PyTorch and Scikit-learn compatibility)
+* **Git** installed on your machine
+* A **Google Gemini API Key** (obtainable from [Google AI Studio](https://aistudio.google.com/))
+
+### Local Setup
+
 To run this project locally, follow these steps:
 
-1.  **Clone the repository:**
+1. **Clone the repository:**
     ```bash
     git clone https://github.com/abdulmumeen-abdullahi/FarmConsultAI.git
     cd FarmConsultAI
     ```
-2.  **Install the required dependencies:**
+2. **Create a Virtual Environment**
+  
+    ```bash
+    python -m venv venv
+    source venv/bin/activate   # Linux/Mac
+    venv\Scripts\activate      # Windows
+    ```
+
+3. **Install the required Dependencies**
+  
     ```bash
     pip install -r requirements.txt
     ```
-3.  **Set up your API keys:**
-    Create a `.streamlit/secrets.toml` file and add your Gemini API key:
-    ```toml
-    GEMINI_API_KEY = "YOUR_API_KEY_HERE"
-    ```
-4.  **Run the Streamlit app:**
-    ```bash
-    streamlit run streamlit_app.py
-    ```
+
+4. **Configure your Gemini API key:**
+   Create a `.streamlit` directory in the project root and add a `secrets.toml` file inside it:
+   ```bash
+   mkdir -p .streamlit
+   ```
+   Open `.streamlit/secrets.toml` and add your API key:
+   ```toml
+   GEMINI_API_KEY = "YOUR_API_KEY_HERE"
+   ```
+   > [!IMPORTANT]
+   > Ensure `.streamlit/secrets.toml` is listed in your `.gitignore` file so you never accidentally commit your API key to version control.
+
+### Running the Application
+
+1. **Start the Streamlit server** (with your `(venv)` environment still active):
+   ```bash
+   streamlit run streamlit_app.py
+   ```
+
+2. **Open the app in your browser:**
+   Streamlit will launch the interface automatically, or you can navigate manually to `http://localhost:8501`. From the navigation menu, select either **Crop Yield Prediction** (enter soil, weather, and nitrogen parameters) or **Crop Disease Diagnosis** (upload a clear crop leaf image) to generate predictions and Gemini-powered agronomic advice.
 
 ---
 
