@@ -73,7 +73,7 @@ Before setting up the project locally, ensure you have:
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/abdulmumeen-abdullahi/FarmConsultAI.git](https://github.com/abdulmumeen-abdullahi/FarmConsultAI.git)
+   git clone https://github.com/abdulmumeen-abdullahi/FarmConsultAI.git
    cd FarmConsultAI
    ```
 
