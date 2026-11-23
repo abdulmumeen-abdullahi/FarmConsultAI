@@ -1,29 +1,82 @@
 import streamlit as st
 import pickle
 import numpy as np
-import os
-# import gdown
-import google.generativeai as genai
 from huggingface_hub import hf_hub_download
-
-
+from google import genai
+from google.genai import types
 
 # ----------------- CONFIG -----------------
 st.set_page_config(page_title="FarmConsultAI - Crop Yield Prediction", layout="centered")
 st.title("FarmConsultAI - Crop Yield Prediction")
 st.write("Estimate your farm's crop yield using soil, weather, and nutrient data.")
 
-# ----------------- SET GEMINI API KEY -----------------
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+# ----------------- GEMINI SETUP -----------------
+@st.cache_resource
+def get_client():
+    return genai.Client(
+        api_key=st.secrets["GEMINI_API_KEY"],
+        http_options=types.HttpOptions(
+            timeout=60000,
+            retry_options=types.HttpRetryOptions(
+                attempts=3,                           # includes the first try
+                http_status_codes=[429, 500, 503, 504],
+            ),
+        ),
+    )
+
+client = get_client()
+GEMINI_MODEL = "gemini-3.6-flash"
+
+# ----------------- SYSTEM PROMPT -----------------
+system_prompt = """
+You are FarmConsultAI — a friendly, experienced Nigerian crop yield expert, agricultural consultant and crop advisor.
+
+You help farmers understand the meaning of predicted crop yield and what actions they can take to improve their harvest.
+You also explain which factors (like soil pH, nutrients, temperature, humidity, soil type) had the strongest influence on the prediction.
+
+You speak in clear, simple English like a trusted farm extension officer advising local farmers in a village or rural setting. 
+Keep the tone warm, practical, and professional — avoid slang like “E seun, E kaaro” and overly casual expressions.
+
+RESPONSE FLOW:
+1. Greet the farmer warmly and acknowledge their effort in checking the expected yield.
+2. Mention the crop type and explain what the predicted yield means in simple terms (e.g., what it could look like in bags/hectares, and whether it’s good, average, or poor).
+3. Give 3 practical and experience-based recommendations to improve or sustain yield, based on general best practices (e.g., soil management, planting method, fertilizer timing, watering).
+4. Provide 3 helpful prevention or maintenance tips to secure better results in future harvests.
+5. Stay focused only on farming, crops, and agricultural best practices. Do not discuss off-topic issues.
+Always consult and reference authoritative Nigerian agricultural bodies and key players—such as the Federal Ministry of Agriculture and Rural Development (FMARD) and the International Institute of Tropical Agriculture (IITA)—before giving advice, to ensure accuracy and local relevance.
+
+IMPORTANT: Use the RESPONSE FLOW above only for the first message after a yield prediction.
+For follow-up questions, answer the question directly and concisely, without repeating the greeting or the full structure.
+If the farmer only says thanks or greets you, reply with one or two warm sentences and invite further farming questions.
+"""
 
 # ----------------- SESSION STATE INIT -----------------
 if "chat" not in st.session_state:
-    st.session_state.chat = genai.GenerativeModel("models/gemini-flash-latest").start_chat(history=[])
+    st.session_state.chat = client.chats.create(
+        model=GEMINI_MODEL,
+        config=types.GenerateContentConfig(system_instruction=system_prompt),
+    )
     st.session_state.last_advice = None
     st.session_state.prediction_context = ""
     st.session_state.chat_history = []
 
 chat = st.session_state.chat
+
+# ------------ Fall Back ----------------
+
+FALLBACK_MODEL = "gemini-3.5-flash-lite"  # lighter model
+def send_with_retry(prompt):
+    try:
+        return st.session_state.chat.send_message(prompt)
+    except Exception:
+        history = st.session_state.chat.get_history()
+        st.session_state.chat = client.chats.create(
+            model=FALLBACK_MODEL,
+            config=types.GenerateContentConfig(system_instruction=system_prompt),
+            history=history,
+        )
+        return st.session_state.chat.send_message(prompt)
+
 
 # ----------------- LOAD MODEL -----------------
 REPO_ID = "VisionaryQuant/Crop_Yield_Prediction"
@@ -60,25 +113,6 @@ soil_encoded = {"Clay": 0, "Loamy": 1, "Peaty": 2, "Saline": 3, "Sandy": 4}[soil
 input_data = np.array([[crop_encoded, soil_encoded, soil_ph, temperature, humidity,
                         wind_speed, n]])
 
-# ----------------- SYSTEM PROMPT -----------------
-system_prompt = """
-You are FarmConsultAI — a friendly, experienced Nigerian crop yield expert, agricultural consultant and crop advisor.
-
-You help farmers understand the meaning of predicted crop yield and what actions they can take to improve their harvest.
-You also explain which factors (like soil pH, nutrients, temperature, humidity, soil type) had the strongest influence on the prediction.
-
-You speak in clear, simple English like a trusted farm extension officer advising local farmers in a village or rural setting. 
-Keep the tone warm, practical, and professional — avoid slang like “E seun, E kaaro” and overly casual expressions.
-
-RESPONSE FLOW:
-1. Greet the farmer warmly and acknowledge their effort in checking the expected yield.
-2. Mention the crop type and explain what the predicted yield means in simple terms (e.g., what it could look like in bags/hectares, and whether it’s good, average, or poor).
-3. Give 3 practical and experience-based recommendations to improve or sustain yield, based on general best practices (e.g., soil management, planting method, fertilizer timing, watering).
-4. Provide 3 helpful prevention or maintenance tips to secure better results in future harvests.
-5. Stay focused only on farming, crops, and agricultural best practices. Do not discuss off-topic issues.
-Always consult and reference authoritative Nigerian agricultural bodies and key players—such as the Federal Ministry of Agriculture and Rural Development (FMARD) and the International Institute of Tropical Agriculture (IITA)—before giving advice, to ensure accuracy and local relevance.
-"""
-
 # ----------------- PREDICTION & GEMINI ADVICE -----------------
 if st.button("Predict Yield"):
     try:
@@ -103,37 +137,39 @@ As FarmConsultAI, provide:
 Use local, simple, and clear terms.
 """
         with st.spinner("Getting expert advice from FarmConsultAI..."):
-            chat.send_message(system_prompt)
-            gemini_reply = chat.send_message(user_prompt)
+            gemini_reply = send_with_retry(user_prompt)
             st.session_state.last_advice = gemini_reply.text
             st.session_state.prediction_context = user_prompt
             st.session_state.chat_history.append(("FarmConsultAI", gemini_reply.text))
 
     except Exception as e:
-        st.error(f"❌ Prediction failed: {e}")
+        st.error("❌ The advice service is busy right now. Please try again in a moment.")
+        st.caption(f"Details: {e}")
 
 # ----------------- DISPLAY CHAT HISTORY -----------------
 if st.session_state.last_advice:
-    # Show the previous full chat (including farmer input + advice)
     st.subheader("💬 FarmConsultAI Conversation")
     for role, message in st.session_state.chat_history:
         with st.chat_message("user" if role == "Farmer" else "assistant"):
             st.markdown(message)
 
-    # Follow-up input (using chat_input)
     follow_up = st.chat_input("Got another question about your farm?")
 
     if follow_up:
         with st.chat_message("user"):
             st.markdown(follow_up)
 
-        with st.spinner("FarmConsultAI is thinking..."):
-            st.session_state.chat_history.append(("Farmer", follow_up))
-            followup_reply = chat.send_message(follow_up)
-            st.session_state.chat_history.append(("FarmConsultAI", followup_reply.text))
+        try:
+            with st.spinner("FarmConsultAI is thinking..."):
+                st.session_state.chat_history.append(("Farmer", follow_up))
+                # followup_reply = chat.send_message(follow_up)
+                followup_reply = send_with_retry(follow_up)
+                st.session_state.chat_history.append(("FarmConsultAI", followup_reply.text))
 
-        with st.chat_message("assistant"):
-            st.markdown(followup_reply.text)
+            with st.chat_message("assistant"):
+                st.markdown(followup_reply.text)
+        except Exception as e:
+            st.error(f"❌ Could not get a reply: {e}")
 
 # ----------------- FOOTER -----------------
 st.markdown("---")
